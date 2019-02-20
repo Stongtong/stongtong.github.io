@@ -1,0 +1,1721 @@
+<!DOCTYPE html>
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+
+<html class="theme-next gemini use-motion" lang="zh-CN">
+<head><meta name="generator" content="Hexo 3.8.0">
+  <meta charset="UTF-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2">
+
+<link rel="stylesheet" href="/css/main.css?v=7.0.0">
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png?v=7.0.0">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png?v=7.0.0">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png?v=7.0.0">
+
+
+  <link rel="mask-icon" href="/images/logo.svg?v=7.0.0" color="#222">
+
+
+
+
+
+
+
+<script id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Gemini',
+    version: '7.0.0',
+    sidebar: {"position":"left","display":"post","offset":12,"b2t":false,"scrollpercent":false,"onmobile":false},
+    fancybox: false,
+    fastclick: false,
+    lazyload: false,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+  
+
+
+
+
+  <meta name="description" content="前言：一直在用七牛云作为博客的图床，但是之前发现在七牛云的图床网址必须要进行备案了，太委屈！我自己的个人网站，就是在写写自己的日记、技术笔记、工作感悟、巴拉巴拉巴拉，还要让我备案，真是没地说理去；辗转反侧，也不能因为这个事情不写、不记录啊，所以最近萌生了博客无图的想法，之前用markdown的时候正好接触过markdown的绘图功能，身材很好（轻量级）并且该有的都有，哈哈，今天用这篇博客记录一下m">
+<meta name="keywords" content="markdown，mermaid">
+<meta property="og:type" content="article">
+<meta property="og:title" content="markdown中的绘图语法">
+<meta property="og:url" content="https://tongfan.xyz/2018/01/13/markdown中的绘图语法-md/index.html">
+<meta property="og:site_name" content="XTong notes">
+<meta property="og:description" content="前言：一直在用七牛云作为博客的图床，但是之前发现在七牛云的图床网址必须要进行备案了，太委屈！我自己的个人网站，就是在写写自己的日记、技术笔记、工作感悟、巴拉巴拉巴拉，还要让我备案，真是没地说理去；辗转反侧，也不能因为这个事情不写、不记录啊，所以最近萌生了博客无图的想法，之前用markdown的时候正好接触过markdown的绘图功能，身材很好（轻量级）并且该有的都有，哈哈，今天用这篇博客记录一下m">
+<meta property="og:locale" content="zh-CN">
+<meta property="og:updated_time" content="2019-02-18T12:17:39.768Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="markdown中的绘图语法">
+<meta name="twitter:description" content="前言：一直在用七牛云作为博客的图床，但是之前发现在七牛云的图床网址必须要进行备案了，太委屈！我自己的个人网站，就是在写写自己的日记、技术笔记、工作感悟、巴拉巴拉巴拉，还要让我备案，真是没地说理去；辗转反侧，也不能因为这个事情不写、不记录啊，所以最近萌生了博客无图的想法，之前用markdown的时候正好接触过markdown的绘图功能，身材很好（轻量级）并且该有的都有，哈哈，今天用这篇博客记录一下m">
+
+
+
+  <link rel="alternate" href="/atom.xml" title="XTong notes" type="application/atom+xml">
+
+
+
+
+  <link rel="canonical" href="https://tongfan.xyz/2018/01/13/markdown中的绘图语法-md/">
+
+
+
+<script id="page.configurations">
+  CONFIG.page = {
+    sidebar: "",
+  };
+</script>
+
+  <title>markdown中的绘图语法 | XTong notes</title>
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .motion-element,
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-title { opacity: initial; }
+
+  .use-motion .logo,
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-CN">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">XTong notes</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+    
+      
+        <h1 class="site-subtitle" itemprop="description">Live beautifully, dream passionately, love completely</h1>
+      
+    
+    
+  </div>
+
+  <div class="site-nav-toggle">
+    <button aria-label="切换导航栏">
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  
+    <ul id="menu" class="menu">
+      
+        
+        
+        
+          
+          <li class="menu-item menu-item-home">
+
+    
+    
+    
+      
+    
+
+    
+      
+    
+
+    <a href="/" rel="section"><i class="menu-item-icon fa fa-fw fa-home"></i> <br>首页</a>
+
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-about">
+
+    
+    
+    
+      
+    
+
+    
+      
+    
+
+    <a href="/about/" rel="section"><i class="menu-item-icon fa fa-fw fa-user"></i> <br>关于</a>
+
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-tags">
+
+    
+    
+    
+      
+    
+
+    
+      
+    
+
+    <a href="/tags/" rel="section"><i class="menu-item-icon fa fa-fw fa-tags"></i> <br>标签<span class="badge">8</span></a>
+
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-categories">
+
+    
+    
+    
+      
+    
+
+    
+      
+    
+
+    <a href="/categories/" rel="section"><i class="menu-item-icon fa fa-fw fa-th"></i> <br>分类<span class="badge">4</span></a>
+
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-archives">
+
+    
+    
+    
+      
+    
+
+    
+      
+    
+
+    <a href="/archives/" rel="section"><i class="menu-item-icon fa fa-fw fa-archive"></i> <br>归档<span class="badge">6</span></a>
+
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-sitemap">
+
+    
+    
+    
+      
+    
+
+    
+      
+    
+
+    <a href="/sitemap.xml" rel="section"><i class="menu-item-icon fa fa-fw fa-sitemap"></i> <br>站点地图</a>
+
+  </li>
+
+      
+      
+        <li class="menu-item menu-item-search">
+          
+            <a href="javascript:;" class="popup-trigger">
+          
+            
+              <i class="menu-item-icon fa fa-search fa-fw"></i> <br>搜索</a>
+        </li>
+      
+    </ul>
+  
+
+  
+
+  
+    <div class="site-search">
+      
+  <div class="popup search-popup local-search-popup">
+  <div class="local-search-header clearfix">
+    <span class="search-icon">
+      <i class="fa fa-search"></i>
+    </span>
+    <span class="popup-btn-close">
+      <i class="fa fa-times-circle"></i>
+    </span>
+    <div class="local-search-input-wrapper">
+      <input autocomplete="off" placeholder="搜索..." spellcheck="false" type="text" id="local-search-input">
+    </div>
+  </div>
+  <div id="local-search-result"></div>
+</div>
+
+
+
+    </div>
+  
+</nav>
+
+
+
+  
+
+
+
+</div>
+    </header>
+
+    
+
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+            
+
+          
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://tongfan.xyz/2018/01/13/markdown中的绘图语法-md/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="XiaoTong Wang">
+      <meta itemprop="description" content="You Never Know Who You Are">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="XTong notes">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h2 class="post-title" itemprop="name headline">markdown中的绘图语法
+
+              
+            
+          </h2>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+
+            
+            
+            
+
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+
+              
+                
+              
+
+              <time title="创建时间：2018-01-13 19:12:24" itemprop="dateCreated datePublished" datetime="2018-01-13T19:12:24+08:00">2018-01-13</time>
+            
+
+            
+              
+
+              
+                
+                <span class="post-meta-divider">|</span>
+                
+
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-calendar-check-o"></i>
+                </span>
+                
+                  <span class="post-meta-item-text">更新于</span>
+                
+                <time title="修改时间：2019-02-18 20:17:39" itemprop="dateModified" datetime="2019-02-18T20:17:39+08:00">2019-02-18</time>
+              
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing"><a href="/categories/markdown/" itemprop="url" rel="index"><span itemprop="name">markdown</span></a></span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+            
+              
+              <span class="post-comments-count">
+                <span class="post-meta-divider">|</span>
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-comment-o"></i>
+                </span>
+            
+                <span class="post-meta-item-text">评论数：</span>
+                <a href="/2018/01/13/markdown中的绘图语法-md/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count valine-comment-count" data-xid="/2018/01/13/markdown中的绘图语法-md/" itemprop="commentCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p><strong>前言：</strong>一直在用七牛云作为博客的图床，但是之前发现在七牛云的图床网址必须要进行备案了，太委屈！我自己的个人网站，就是在写写自己的日记、技术笔记、工作感悟、巴拉巴拉巴拉，还要让我备案，真是没地说理去；辗转反侧，也不能因为这个事情不写、不记录啊，所以最近萌生了博客无图的想法，之前用markdown的时候正好接触过markdown的绘图功能，身材很好（轻量级）并且该有的都有，哈哈，今天用这篇博客记录一下markdown中的常用绘图语法，方便以后使用。</p>
+<a id="more"></a>
+<h1 id="1-语法介绍"><a href="#1-语法介绍" class="headerlink" title="1 语法介绍"></a>1 语法介绍</h1><p>markdown能够绘制的图形有很多种，例如最常见的框图、流程图、甘特图、时序图等等，这里先对其关键字进行介绍。</p>
+<h2 id="1-1-基本关键字"><a href="#1-1-基本关键字" class="headerlink" title="1.1 基本关键字"></a>1.1 基本关键字</h2><ul>
+<li><p>mermaid：主要用来绘制框图、甘特图、时序图等，该关键字是比较标准的用法，配合其他关键字能够完成特定图形的绘制；</p>
+<ul>
+<li><p>gantt：绘制甘特图；</p>
+</li>
+<li><p>sequenceDiagram：绘制时序图（UML）；</p>
+</li>
+<li><p>graph ：绘制框图时，图形的位置，后面可接收方向关键词，具体如下（比较简单，不再解释）：</p>
+<ul>
+<li><p>TB - top bottom </p>
+</li>
+<li><p>BT - bottom top </p>
+</li>
+<li>RL - right left </li>
+<li>LR - left right </li>
+<li>TD - as same TB</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><p>flow：用来绘制完整的流程图；</p>
+</li>
+<li><p>sequence：用来绘制时序图；</p>
+</li>
+</ul>
+<h2 id="1-2-基本元素使用"><a href="#1-2-基本元素使用" class="headerlink" title="1.2 基本元素使用"></a>1.2 基本元素使用</h2><h3 id="框"><a href="#框" class="headerlink" title="框"></a>框</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">graph LR</span><br><span class="line">id1</span><br></pre></td></tr></table></figure>
+<pre class="mermaid">graph LR
+id1</pre>
+
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">graph LR</span><br><span class="line">id[I am wxt, I am very happy.]</span><br></pre></td></tr></table></figure>
+<pre class="mermaid">graph LR
+id[I am wxt, I am very happy.文本框]</pre>
+
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">graph LR</span><br><span class="line">id(I am wxt, I am very happy.圆角)</span><br></pre></td></tr></table></figure>
+<pre class="mermaid">graph LR
+id(I am wxt, I am very happy.圆角)</pre>
+
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">graph LR</span><br><span class="line">id((This is the text in the circle.圆节点));</span><br></pre></td></tr></table></figure>
+<pre class="mermaid">graph LR
+id((This is the text in the circle));</pre>
+
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">graph LR</span><br><span class="line">id&gt;This is the text in the box非对称节点]</span><br></pre></td></tr></table></figure>
+<pre class="mermaid">graph LR
+id>This is the text in the box非对称节点]</pre>
+
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">graph LR</span><br><span class="line">id&#123;This is the text in the box&#125;</span><br></pre></td></tr></table></figure>
+<pre class="mermaid">graph LR
+id{This is the text in the box菱形节点}</pre>
+
+<h3 id="连接线"><a href="#连接线" class="headerlink" title="连接线"></a>连接线</h3><p>接线中加入标签：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">graph LR;</span><br><span class="line">  A--&gt;B;</span><br><span class="line">%% 箭头链接</span><br></pre></td></tr></table></figure>
+<pre class="mermaid">graph LR;
+  A-->B;</pre>
+
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">graph LR</span><br><span class="line">A --- B</span><br><span class="line">%% 无箭头</span><br></pre></td></tr></table></figure>
+<pre class="mermaid">graph LR
+A --- B
+%% 无箭头</pre>
+
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">graph LR</span><br><span class="line">A -- This is the label text --- B;</span><br><span class="line">%% 标签</span><br></pre></td></tr></table></figure>
+<pre class="mermaid">graph LR
+A -- This is the label text --- B;
+%% 标签</pre>
+
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">graph LR</span><br><span class="line">A-- text --&gt;B</span><br><span class="line">%% 箭头标签</span><br></pre></td></tr></table></figure>
+<pre class="mermaid">graph LR
+A--text-->B</pre>
+
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">graph LR</span><br><span class="line">A-.-&gt;B</span><br><span class="line">%% 虚线</span><br></pre></td></tr></table></figure>
+<pre class="mermaid">graph LR
+A-.->B
+%% 虚线</pre>
+
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">graph LR</span><br><span class="line">A-.text.-&gt;B</span><br><span class="line">%% 标签虚线</span><br></pre></td></tr></table></figure>
+<pre class="mermaid">graph LR
+A-.text.->B
+%% 标签虚线</pre>
+
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">graph LR</span><br><span class="line">A==&gt;B</span><br><span class="line">%% 有向粗实线</span><br></pre></td></tr></table></figure>
+<pre class="mermaid">graph LR
+A==>B
+%% 有向粗实线</pre>
+
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">graph LR</span><br><span class="line">A===B</span><br><span class="line">%% 无向粗实线</span><br></pre></td></tr></table></figure>
+<pre class="mermaid">graph LR
+A===B
+%% 无向粗实线</pre>
+
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">graph LR</span><br><span class="line">A==text==&gt;B</span><br><span class="line">%% 标签粗线 有向</span><br></pre></td></tr></table></figure>
+<pre class="mermaid">graph LR
+A==text==>B
+%% 标签粗线 有向</pre>
+
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">graph LR</span><br><span class="line">A==text===B</span><br><span class="line">%% 标签粗线 无向</span><br></pre></td></tr></table></figure>
+<pre class="mermaid">graph LR
+A==text===B
+%% 标签粗线 无向</pre>
+
+
+
+<h3 id="特殊语法"><a href="#特殊语法" class="headerlink" title="特殊语法"></a>特殊语法</h3><p>1、引号可以抑制一些特殊字符的使用，避免一些不必要的麻烦。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">graph LR</span><br><span class="line">d1[&quot;This is the (text) in the box&quot;]</span><br></pre></td></tr></table></figure>
+<p>2、html字符的转义字符</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">graph LR</span><br><span class="line">        A[&quot;A double quote:#quot;&quot;]--&gt;B[&quot;A dec char:#9829;&quot;]</span><br></pre></td></tr></table></figure>
+<pre class="mermaid">graph LR
+        A["A double quote:#quot;"]-->B["A dec char:#9829;"]</pre>
+
+
+
+<h3 id="子图"><a href="#子图" class="headerlink" title="子图"></a>子图</h3><p>基本语法如下：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">subgraph title </span><br><span class="line">graph definition </span><br><span class="line">end</span><br></pre></td></tr></table></figure>
+<p>具体示例如下：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">graph TB</span><br><span class="line">        subgraph one</span><br><span class="line">        a1 --&gt; a2</span><br><span class="line">        end</span><br><span class="line">        subgraph two</span><br><span class="line">        b2 --&gt; b2</span><br><span class="line">        end</span><br><span class="line">        subgraph three</span><br><span class="line">        c1 --&gt; c2</span><br><span class="line">        end</span><br><span class="line">        c1 --&gt; a2</span><br></pre></td></tr></table></figure>
+<pre class="mermaid">graph TB
+        subgraph one
+        a1 --> a2
+        end
+        subgraph two
+        b2 --> b2
+        end
+        subgraph three
+        c1 --> c2
+        end
+        c1 --> a2</pre>
+
+
+
+<h3 id="基础fontawesome支持"><a href="#基础fontawesome支持" class="headerlink" title="基础fontawesome支持"></a>基础fontawesome支持</h3><p>在图片之中要加入来自frontawesome的图表字体，需要像frontawesome网站上那样引用的那样。详情：<a href="http://fontawesome.io/">fontawdsome</a></p>
+<p>具体示例如下：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">graph TD</span><br><span class="line">      B[&quot;fa:fa-twitter for peace&quot;]</span><br><span class="line">      B--&gt;C[fa:fa-ban forbidden]</span><br><span class="line">      B--&gt;D(fa:fa-spinner);</span><br><span class="line">      B--&gt;E(A fa:fa-camerra-retro perhaps?);</span><br></pre></td></tr></table></figure>
+<pre class="mermaid">graph TD
+      B["fa:fa-twitter for peace"]
+      B-->C[fa:fa-ban forbidden]
+      B-->D(fa:fa-spinner);
+      B-->E(A fa:fa-camerra-retro perhaps?);</pre>
+
+
+
+<h2 id="1-3-渲染"><a href="#1-3-渲染" class="headerlink" title="1.3 渲染"></a>1.3 渲染</h2><p>定义连接线的样式</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">graph LR</span><br><span class="line">     id1(Start)--&gt;id2(Stop)</span><br><span class="line">     style id1 fill:#f9f,stroke:#333,stroke-width:4px;</span><br><span class="line">     style id2 fill:#ccf,stroke:#f66,stroke-width:2px,stroke-dasharray:5,5;</span><br></pre></td></tr></table></figure>
+<pre class="mermaid">graph LR
+     id1(Start)-->id2(Stop)
+     style id1 fill:#f9f,stroke:#333,stroke-width:4px;
+     style id2 fill:#ccf,stroke:#f66,stroke-width:2px,stroke-dasharray:5,5;</pre>
+
+
+
+<h3 id="样式"><a href="#样式" class="headerlink" title="样式"></a>样式</h3><p>为了方便样式的使用，可以定义类来使用样式，类的定义示例如下：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">classDef className fill:#f9f,stroke:#333,stroke-width:4px;</span><br></pre></td></tr></table></figure>
+<p>对节点使用样式类：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">class nodeId className;</span><br></pre></td></tr></table></figure>
+<p>同时对多个节点使用相同的样式类：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">class nodeId1,nodeId2 className;</span><br></pre></td></tr></table></figure>
+<p>可以在CSS中提前定义样式类，应用在图表的定义中。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">graph LR</span><br><span class="line">      A--&gt;B[AAABBB];</span><br><span class="line">      B--&gt;D;</span><br><span class="line">      class A cssClass;</span><br></pre></td></tr></table></figure>
+<p>默认样式类：当没有指定样式的时候，默认采用。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">classDef default fill:#f9f,stroke:#333,stroke-width:4px;</span><br></pre></td></tr></table></figure>
+<p>示例：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">graph LR</span><br><span class="line">    classDef default fill:#f90,stroke:#555,stroke-width:4px;</span><br><span class="line">    id1(Start)--&gt;id2(Stop)</span><br></pre></td></tr></table></figure>
+<pre class="mermaid">graph LR
+    classDef default fill:#f90,stroke:#555,stroke-width:4px;
+    id1(Start)-->id2(Stop)</pre>
+
+
+
+<h1 id="2-时序图-sequence-diagram"><a href="#2-时序图-sequence-diagram" class="headerlink" title="2 时序图(sequence diagram)"></a>2 时序图(sequence diagram)</h1><h2 id="2-1-基本语法"><a href="#2-1-基本语法" class="headerlink" title="2.1 基本语法"></a>2.1 基本语法</h2><p>时序图，又叫序列图，为uml中比较常用的图形，在md中如下制作：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">sequenceDiagram</span><br><span class="line">　　Alice-&gt;&gt;John: Hello John, how are you ?</span><br><span class="line">　　John--&gt;&gt;Alice: Great!</span><br><span class="line">　　Alice-&gt;&gt;John: Huang,you are better .</span><br><span class="line">　　John--&gt;&gt;Alice: yeah, Just not bad.</span><br></pre></td></tr></table></figure>
+<pre class="mermaid">sequenceDiagram
+　　Alice->>John: Hello John, how are you ?
+　　John-->>Alice: Great!
+　　Alice->>John: Huang,you are better .
+　　John-->>Alice: yeah, Just not bad.</pre>
+
+<p>观察上图，如果想让John出现在前面，让Alice在后面，原图的结构不发生改变，那要如何操作。mermaid通过设定参与者(participants)的顺序控制二者的顺序，示例如下</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">sequenceDiagram</span><br><span class="line">　　participant John</span><br><span class="line">　　participant Alice</span><br><span class="line">　　Alice-xJohn:Hello John,how are you?</span><br><span class="line">　　John--&gt;&gt;Alice:Great!</span><br></pre></td></tr></table></figure>
+<pre class="mermaid">sequenceDiagram
+　　participant John
+　　participant Alice
+　　Alice-xJohn:Hello John,how are you?
+　　John-->>Alice:Great!</pre>
+
+
+
+<h2 id="2-2-消息语法"><a href="#2-2-消息语法" class="headerlink" title="2.2 消息语法"></a>2.2 消息语法</h2><p>实线或者虚线的使用，Arrow的六种样式</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">-&gt;</span><br><span class="line">--&gt;</span><br><span class="line">-&gt;&gt;</span><br><span class="line">--&gt;&gt;</span><br><span class="line">-x</span><br><span class="line">--x</span><br></pre></td></tr></table></figure>
+<p>具体示例如下：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">sequenceDiagram</span><br><span class="line">    Alice-&gt;John: Hello John, how are you ?</span><br><span class="line">    John--&gt;Alice:Great!</span><br><span class="line">    Alice-&gt;&gt;John: dont borther me !</span><br><span class="line">    John--&gt;&gt;Alice:Great!</span><br><span class="line">    Alice-xJohn: wait!</span><br><span class="line">    John--xAlice: Ok!</span><br></pre></td></tr></table></figure>
+<pre class="mermaid">sequenceDiagram
+    Alice->John: Hello John, how are you ?
+    John-->Alice:Great!
+    Alice->>John: dont borther me !
+    John-->>Alice:Great!
+    Alice-xJohn: wait!
+    John--xAlice: Ok!</pre>
+
+
+
+<h2 id="2-3-便签"><a href="#2-3-便签" class="headerlink" title="2.3 便签"></a>2.3 便签</h2><p>序列图增加便签，具体规则<code>[right of | left of | over][Actor]:Text</code> ，具体示例。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">sequenceDiagram</span><br><span class="line">　　participant John</span><br><span class="line">　　Note left of John: Text in note</span><br></pre></td></tr></table></figure>
+<pre class="mermaid">sequenceDiagram
+　　participant John
+　　Note left of John: Text in note</pre>
+
+
+
+<p>跨越两个Actor的便签：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">sequenceDiagram</span><br><span class="line">	Alice-&gt;&gt;John:Hello John, how are you?</span><br><span class="line">	Note over Alice,John:A typical interaction</span><br></pre></td></tr></table></figure>
+<pre class="mermaid">sequenceDiagram
+    Alice->>John:Hello John, how are you?
+    Note over Alice,John:A typical interaction</pre>
+
+
+
+<h2 id="2-4-循环Loops"><a href="#2-4-循环Loops" class="headerlink" title="2.4 循环Loops"></a>2.4 循环Loops</h2><p>在序列图中，也可以使用循环，具体规则如下：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">loop Loop text</span><br><span class="line">... statements...</span><br><span class="line">end</span><br></pre></td></tr></table></figure>
+<p>示例：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">sequenceDiagram</span><br><span class="line">　　Alice-&gt;&gt;John: Hello!</span><br><span class="line">　　loop Reply every minute</span><br><span class="line">　　　　John-&gt;&gt;Alice:Great!</span><br><span class="line">　　end</span><br></pre></td></tr></table></figure>
+<pre class="mermaid">sequenceDiagram
+　　Alice->>John: Hello!
+　　loop Reply every minute
+　　　　John->>Alice:Great!
+　　end</pre>
+
+
+
+<h2 id="2-5-选择ALT"><a href="#2-5-选择ALT" class="headerlink" title="2.5 选择ALT"></a>2.5 选择ALT</h2><p>在序列图中选择的表达。规则如下：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">alt Describing text</span><br><span class="line">...statements...</span><br><span class="line">else</span><br><span class="line">...statements...</span><br><span class="line">end</span><br></pre></td></tr></table></figure>
+<p>或者使用opt(推荐在没有else的情况下使用)</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">opt Describing text</span><br><span class="line">...statements...</span><br><span class="line">end</span><br></pre></td></tr></table></figure>
+<p>示例：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">sequenceDiagram</span><br><span class="line">　　Alice-&gt;&gt;Bob: Hello Bob, how are you?</span><br><span class="line">　　alt is sick</span><br><span class="line">　　　　Bob-&gt;&gt;Alice:not so good :(</span><br><span class="line">　　else is well</span><br><span class="line">　　　　Bob-&gt;&gt;Alice:Feeling fresh like a daisy:)</span><br><span class="line">　　end</span><br><span class="line">　　opt Extra response</span><br><span class="line">　　　　Bob-&gt;&gt;Alice:Thanks for asking</span><br><span class="line">　　end</span><br></pre></td></tr></table></figure>
+<pre class="mermaid">sequenceDiagram
+　　Alice->>Bob: Hello Bob, how are you?
+　　alt is sick
+　　　　Bob->>Alice:not so good :(
+　　else is well
+　　　　Bob->>Alice:Feeling fresh like a daisy:)
+　　end
+　　opt Extra response
+　　　　Bob->>Alice:Thanks for asking
+　　end</pre>
+
+
+
+<h1 id="3-甘特图-gantt"><a href="#3-甘特图-gantt" class="headerlink" title="3 甘特图(gantt)"></a>3 甘特图(gantt)</h1><p>甘特图是一类条形图，由Karol Adamiechi在1896年提出, 而在1910年Henry Gantt也独立的提出了此种图形表示。通常用在对项目终端元素和总结元素的开始及完成时间进行的描述。</p>
+<p>示例：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line">gantt</span><br><span class="line">dateFormat YYYY-MM-DD</span><br><span class="line"></span><br><span class="line">section S1</span><br><span class="line">T1: 2014-01-01, 9d</span><br><span class="line"></span><br><span class="line">section S2</span><br><span class="line">T2: 2014-01-11, 9d</span><br><span class="line"></span><br><span class="line">section S3</span><br><span class="line">T3: 2014-01-02, 9d</span><br><span class="line">gantt</span><br><span class="line">dateFormat YYYY-MM-DD</span><br><span class="line">section S1</span><br><span class="line">T1: 2014-01-01, 9d</span><br><span class="line">section S2</span><br><span class="line">T2: 2014-01-11, 9d</span><br><span class="line">section S3</span><br><span class="line">T3: 2014-01-02, 9d</span><br></pre></td></tr></table></figure>
+<p>先来看一个的例子：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br></pre></td><td class="code"><pre><span class="line">gantt</span><br><span class="line">dateFormat  YYYY-MM-DD</span><br><span class="line">title Adding GANTT diagram functionality to mermaid</span><br><span class="line"></span><br><span class="line">section A section</span><br><span class="line">Completed task            :done,    des1, 2014-01-06,2014-01-08</span><br><span class="line">Active task               :active,  des2, 2014-01-09, 3d</span><br><span class="line">Future task               :         des3, after des2, 5d</span><br><span class="line">Future task2               :         des4, after des3, 5d</span><br><span class="line"></span><br><span class="line">section Critical tasks</span><br><span class="line">Completed task in the critical line :crit, done, 2014-01-06,24h</span><br><span class="line">Implement parser and jison          :crit, done, after des1, 2d</span><br><span class="line">Create tests for parser             :crit, active, 3d</span><br><span class="line">Future task in critical line        :crit, 5d</span><br><span class="line">Create tests for renderer           :2d</span><br><span class="line">Add to mermaid                      :1d</span><br><span class="line"></span><br><span class="line">section Documentation</span><br><span class="line">Describe gantt syntax               :active, a1, after des1, 3d</span><br><span class="line">Add gantt diagram to demo page      :after a1  , 20h</span><br><span class="line">Add another diagram to demo page    :doc1, after a1  , 48h</span><br><span class="line"></span><br><span class="line">section Last section</span><br><span class="line">Describe gantt syntax               :after doc1, 3d</span><br><span class="line">Add gantt diagram to demo page      : 20h</span><br><span class="line">Add another diagram to demo page    : 48h</span><br></pre></td></tr></table></figure>
+<pre class="mermaid">gantt
+    dateFormat  YYYY-MM-DD
+    title Adding GANTT diagram functionality to mermaid
+
+    section A section
+    Completed task            :done,    des1, 2014-01-06,2014-01-08
+    Active task               :active,  des2, 2014-01-09, 3d
+    Future task               :         des3, after des2, 5d
+    Future task2               :         des4, after des3, 5d
+
+    section Critical tasks
+    Completed task in the critical line :crit, done, 2014-01-06,24h
+    Implement parser and jison          :crit, done, after des1, 2d
+    Create tests for parser             :crit, active, 3d
+    Future task in critical line        :crit, 5d
+    Create tests for renderer           :2d
+    Add to mermaid                      :1d
+
+    section Documentation
+    Describe gantt syntax               :active, a1, after des1, 3d
+    Add gantt diagram to demo page      :after a1  , 20h
+    Add another diagram to demo page    :doc1, after a1  , 48h
+
+    section Last section
+    Describe gantt syntax               :after doc1, 3d
+    Add gantt diagram to demo page      : 20h
+    Add another diagram to demo page    : 48h</pre>
+
+
+
+<p>具体关键字中英对应表。</p>
+<table>
+<thead>
+<tr>
+<th>名称</th>
+<th>解释</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>title</td>
+<td>标题</td>
+</tr>
+<tr>
+<td>dateFormat</td>
+<td>日期格式</td>
+</tr>
+<tr>
+<td>section</td>
+<td>模块</td>
+</tr>
+<tr>
+<td>Completed</td>
+<td>已经完成</td>
+</tr>
+<tr>
+<td>Active</td>
+<td>当前正在进行</td>
+</tr>
+<tr>
+<td>Future</td>
+<td>后续待处理</td>
+</tr>
+<tr>
+<td>crit</td>
+<td>关键阶段</td>
+</tr>
+<tr>
+<td>日期缺失</td>
+<td>默认从上一项完成后</td>
+</tr>
+</tbody>
+</table>
+<p>关于日期的格式可以参考：  <a href="http://momentjs.com/docs/#/parsing/string-format/">string-format</a>    <a href="https://github.com/mbostock/d3/wiki/Time-Formatting">Time-Formatting</a></p>
+<h1 id="4-Demo"><a href="#4-Demo" class="headerlink" title="4 Demo"></a>4 Demo</h1><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line">graph TB</span><br><span class="line">    sq[Square shape] --&gt; ci((Circle shape))</span><br><span class="line"></span><br><span class="line">    subgraph A subgraph</span><br><span class="line">        di&#123;Diamond with  line break&#125; -.-&gt; ro(Rounded)</span><br><span class="line">        di==&gt;ro2(Rounded square shape)</span><br><span class="line">    end</span><br><span class="line"></span><br><span class="line">    e --&gt; od3&gt;Really long text with linebreak&lt;br&gt;in an Odd shape]</span><br><span class="line"></span><br><span class="line">    cyr[Cyrillic]--&gt;cyr2((Circle shape Начало));</span><br><span class="line"></span><br><span class="line">    classDef green fill:#9f6,stroke:#333,stroke-width:2px;</span><br><span class="line">    classDef orange fill:#f96,stroke:#333,stroke-width:4px;</span><br><span class="line">    class sq,e green</span><br><span class="line">    class di orange</span><br></pre></td></tr></table></figure>
+<pre class="mermaid">graph TB
+    sq[Square shape] --> ci((Circle shape))
+
+    subgraph A subgraph
+        di{Diamond with  line break} -.-> ro(Rounded)
+        di==>ro2(Rounded square shape)
+    end
+
+    e --> od3>Really long text with linebreak<br>in an Odd shape]
+
+    cyr[Cyrillic]-->cyr2((Circle shape Начало));
+
+    classDef green fill:#9f6,stroke:#333,stroke-width:2px;
+    classDef orange fill:#f96,stroke:#333,stroke-width:4px;
+    class sq,e green
+    class di orange</pre>
+
+
+
+<h1 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h1><p>markdown中所有图形的绘制最终其实都是在使用mermaid，该插件的具体官方地址为<a href="https://mermaidjs.github.io/">mermaidis</a>，本文中没有涵盖的需求具体可以在该链接中找到，总结来说这个绘图功能还是很强大的，在写这篇博客的过程中有一个很深的感触，就是你自己认为的一个很特别或者是小众的需求，其实很多的前辈们早就在之前已经想到、做过或者已经给出了完美的解决方案，所有平时没事的时候还是要多接触、多了解、多积累，等到真正使用的时候才不至于<strong>抓狂</strong>。</p>
+<div class="note primary">
+            <h4 id="本文作者：tongtong"><a href="#本文作者：tongtong" class="headerlink" title="本文作者：tongtong"></a>本文作者：tongtong</h4><h4 id="本文链接：https-stongtong-github-io"><a href="#本文链接：https-stongtong-github-io" class="headerlink" title="本文链接：https://stongtong.github.io/"></a>本文链接：<a href="https://stongtong.github.io/">https://stongtong.github.io/</a></h4><h4 id="版权申明：网站内容为tongtong所有，转载请注明出处。"><a href="#版权申明：网站内容为tongtong所有，转载请注明出处。" class="headerlink" title="版权申明：网站内容为tongtong所有，转载请注明出处。"></a>版权申明：网站内容为tongtong所有，转载请注明出处。</h4>
+          </div>
+
+      
+    </div>
+
+    
+
+    
+    
+    
+
+    
+
+    
+      
+    
+    
+
+    
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/markdown，mermaid/" rel="tag"># markdown，mermaid</a>
+          
+        </div>
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2017/04/05/hbase01-LSM Tree/" rel="next" title="HBASE中LSM Tree">
+                <i class="fa fa-chevron-left"></i> HBASE中LSM Tree
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2019/02/17/HBASE中的数据刷写/" rel="prev" title="HBASE中的数据刷写">
+                HBASE中的数据刷写 <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+  </div>
+
+
+          </div>
+          
+
+  
+    <div class="comments" id="comments">
+    </div>
+
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+            
+              <img class="site-author-image" itemprop="image" src="/images/avatar.gif" alt="XiaoTong Wang">
+            
+              <p class="site-author-name" itemprop="name">XiaoTong Wang</p>
+              <p class="site-description motion-element" itemprop="description">You Never Know Who You Are</p>
+          </div>
+
+          
+            <nav class="site-state motion-element">
+              
+                <div class="site-state-item site-state-posts">
+                
+                  <a href="/archives/">
+                
+                    <span class="site-state-item-count">6</span>
+                    <span class="site-state-item-name">日志</span>
+                  </a>
+                </div>
+              
+
+              
+                
+                
+                <div class="site-state-item site-state-categories">
+                  <a href="/categories/index.html">
+                    
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                    <span class="site-state-item-count">4</span>
+                    <span class="site-state-item-name">分类</span>
+                  </a>
+                </div>
+              
+
+              
+                
+                
+                <div class="site-state-item site-state-tags">
+                  <a href="/tags/index.html">
+                    
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                    <span class="site-state-item-count">8</span>
+                    <span class="site-state-item-name">标签</span>
+                  </a>
+                </div>
+              
+            </nav>
+          
+
+          
+            <div class="feed-link motion-element">
+              <a href="/atom.xml" rel="alternate">
+                <i class="fa fa-rss"></i>
+                RSS
+              </a>
+            </div>
+          
+
+          
+            <div class="links-of-author motion-element">
+              
+                <span class="links-of-author-item">
+                  
+                  
+                    
+                  
+                  
+                    
+                  
+                  <a href="https://github.com/Stongtong" title="GitHub &rarr; https://github.com/Stongtong" rel="noopener" target="_blank"><i class="fa fa-fw fa-github"></i>GitHub</a>
+                </span>
+              
+                <span class="links-of-author-item">
+                  
+                  
+                    
+                  
+                  
+                    
+                  
+                  <a href="mailto:tongxiao@outlook.com" title="E-Mail &rarr; mailto:tongxiao@outlook.com" rel="noopener" target="_blank"><i class="fa fa-fw fa-envelope"></i>E-Mail</a>
+                </span>
+              
+                <span class="links-of-author-item">
+                  
+                  
+                    
+                  
+                  
+                    
+                  
+                  <a href="https://www.zhihu.com/people/wang-xiao-tong-64-73/activities" title="Zhihu &rarr; https://www.zhihu.com/people/wang-xiao-tong-64-73/activities" rel="noopener" target="_blank"><i class="fa fa-fw fa-flag"></i>Zhihu</a>
+                </span>
+              
+                <span class="links-of-author-item">
+                  
+                  
+                    
+                  
+                  
+                    
+                  
+                  <a href="http://blog.csdn.net/wangxiaotongfan" title="CSDN &rarr; http://blog.csdn.net/wangxiaotongfan" rel="noopener" target="_blank"><i class="fa fa-fw fa-coffee"></i>CSDN</a>
+                </span>
+              
+            </div>
+          
+
+          
+
+          
+          
+
+          
+            
+          
+          
+
+        </div>
+      </div>
+
+      
+      <!--noindex-->
+        <div class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+            
+            
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#1-语法介绍"><span class="nav-number">1.</span> <span class="nav-text">1 语法介绍</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#1-1-基本关键字"><span class="nav-number">1.1.</span> <span class="nav-text">1.1 基本关键字</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#1-2-基本元素使用"><span class="nav-number">1.2.</span> <span class="nav-text">1.2 基本元素使用</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#框"><span class="nav-number">1.2.1.</span> <span class="nav-text">框</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#连接线"><span class="nav-number">1.2.2.</span> <span class="nav-text">连接线</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#特殊语法"><span class="nav-number">1.2.3.</span> <span class="nav-text">特殊语法</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#子图"><span class="nav-number">1.2.4.</span> <span class="nav-text">子图</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#基础fontawesome支持"><span class="nav-number">1.2.5.</span> <span class="nav-text">基础fontawesome支持</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#1-3-渲染"><span class="nav-number">1.3.</span> <span class="nav-text">1.3 渲染</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#样式"><span class="nav-number">1.3.1.</span> <span class="nav-text">样式</span></a></li></ol></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#2-时序图-sequence-diagram"><span class="nav-number">2.</span> <span class="nav-text">2 时序图(sequence diagram)</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#2-1-基本语法"><span class="nav-number">2.1.</span> <span class="nav-text">2.1 基本语法</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#2-2-消息语法"><span class="nav-number">2.2.</span> <span class="nav-text">2.2 消息语法</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#2-3-便签"><span class="nav-number">2.3.</span> <span class="nav-text">2.3 便签</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#2-4-循环Loops"><span class="nav-number">2.4.</span> <span class="nav-text">2.4 循环Loops</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#2-5-选择ALT"><span class="nav-number">2.5.</span> <span class="nav-text">2.5 选择ALT</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#3-甘特图-gantt"><span class="nav-number">3.</span> <span class="nav-text">3 甘特图(gantt)</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#4-Demo"><span class="nav-number">4.</span> <span class="nav-text">4 Demo</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#总结"><span class="nav-number">5.</span> <span class="nav-text">总结</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#本文作者：tongtong"><span class="nav-number">5.0.0.1.</span> <span class="nav-text">本文作者：tongtong</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#本文链接：https-stongtong-github-io"><span class="nav-number">5.0.0.2.</span> <span class="nav-text">本文链接：https://stongtong.github.io/</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#版权申明：网站内容为tongtong所有，转载请注明出处。"><span class="nav-number">5.0.0.3.</span> <span class="nav-text">版权申明：网站内容为tongtong所有，转载请注明出处。</span></a></li></ol></li></ol></div>
+            
+
+          </div>
+        </div>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; <span itemprop="copyrightYear">2019</span>
+  <span class="with-love" id="animate">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">XiaoTong Wang</span>
+
+  
+
+  
+</div>
+
+
+
+
+
+
+
+
+
+
+  <script src="https://unpkg.com/mermaid@7.1.2/dist/mermaid.min.js"></script>
+  <script>
+    if (window.mermaid) {
+      mermaid.initialize({theme: 'forest'});
+    }
+  </script>
+
+
+        
+
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+    
+
+    
+
+    
+  </div>
+
+  
+
+<script>
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+    
+    
+  
+  <script color="0,0,255" opacity="0.5" zindex="-1" count="99" src="/lib/canvas-nest/canvas-nest.min.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  <script src="/lib/jquery/index.js?v=2.1.3"></script>
+
+  
+  <script src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+
+  
+  <script src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+
+  
+
+
+  <script src="/js/src/utils.js?v=7.0.0"></script>
+
+  <script src="/js/src/motion.js?v=7.0.0"></script>
+
+
+
+  
+  
+
+
+  <script src="/js/src/affix.js?v=7.0.0"></script>
+
+  <script src="/js/src/schemes/pisces.js?v=7.0.0"></script>
+
+
+
+
+  
+  <script src="/js/src/scrollspy.js?v=7.0.0"></script>
+<script src="/js/src/post-details.js?v=7.0.0"></script>
+
+
+
+  
+
+
+  <script src="/js/src/bootstrap.js?v=7.0.0"></script>
+
+
+
+  
+  
+
+<script src="//cdn1.lncld.net/static/js/3.11.1/av-min.js"></script>
+
+
+
+<script src="//unpkg.com/valine/dist/Valine.min.js"></script>
+
+<script>
+  var GUEST = ['nick', 'mail', 'link'];
+  var guest = 'nick,mail';
+  guest = guest.split(',').filter(function(item) {
+    return GUEST.indexOf(item) > -1;
+  });
+  new Valine({
+    el: '#comments',
+    verify: true,
+    notify: true,
+    appId: 'C5p2It82joj83Mzm0milY5BK-gzGzoHsz',
+    appKey: 'iDq8etLnrVzoVdfbWoOOow4L',
+    placeholder: 'Tell me your story...',
+    avatar: 'mm',
+    meta: guest,
+    pageSize: '10' || 10,
+    visitor: false
+  });
+</script>
+
+
+
+
+  
+
+
+  
+  <script>
+    // Popup Window;
+    var isfetched = false;
+    var isXml = true;
+    // Search DB path;
+    var search_path = "search.xml";
+    if (search_path.length === 0) {
+      search_path = "search.xml";
+    } else if (/json$/i.test(search_path)) {
+      isXml = false;
+    }
+    var path = "/" + search_path;
+    // monitor main search box;
+
+    var onPopupClose = function (e) {
+      $('.popup').hide();
+      $('#local-search-input').val('');
+      $('.search-result-list').remove();
+      $('#no-result').remove();
+      $(".local-search-pop-overlay").remove();
+      $('body').css('overflow', '');
+    }
+
+    function proceedsearch() {
+      $("body")
+        .append('<div class="search-popup-overlay local-search-pop-overlay"></div>')
+        .css('overflow', 'hidden');
+      $('.search-popup-overlay').click(onPopupClose);
+      $('.popup').toggle();
+      var $localSearchInput = $('#local-search-input');
+      $localSearchInput.attr("autocapitalize", "none");
+      $localSearchInput.attr("autocorrect", "off");
+      $localSearchInput.focus();
+    }
+
+    // search function;
+    var searchFunc = function(path, search_id, content_id) {
+      'use strict';
+
+      // start loading animation
+      $("body")
+        .append('<div class="search-popup-overlay local-search-pop-overlay">' +
+          '<div id="search-loading-icon">' +
+          '<i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>' +
+          '</div>' +
+          '</div>')
+        .css('overflow', 'hidden');
+      $("#search-loading-icon").css('margin', '20% auto 0 auto').css('text-align', 'center');
+
+      
+        // ref: https://github.com/ForbesLindesay/unescape-html
+        var unescapeHtml = function(html) {
+          return String(html)
+            .replace(/&quot;/g, '"')
+            .replace(/&#39;/g, '\'')
+            .replace(/&#x3A;/g, ':')
+            // replace all the other &#x; chars
+            .replace(/&#(\d+);/g, function (m, p) { return String.fromCharCode(p); })
+            .replace(/&lt;/g, '<')
+            .replace(/&gt;/g, '>')
+            .replace(/&amp;/g, '&');
+        };
+      
+
+      $.ajax({
+        url: path,
+        dataType: isXml ? "xml" : "json",
+        async: true,
+        success: function(res) {
+          // get the contents from search data
+          isfetched = true;
+          $('.popup').detach().appendTo('.header-inner');
+          var datas = isXml ? $("entry", res).map(function() {
+            return {
+              title: $("title", this).text(),
+              content: $("content",this).text(),
+              url: $("url" , this).text()
+            };
+          }).get() : res;
+          var input = document.getElementById(search_id);
+          var resultContent = document.getElementById(content_id);
+          var inputEventFunction = function() {
+            var searchText = input.value.trim().toLowerCase();
+            var keywords = searchText.split(/[\s\-]+/);
+            if (keywords.length > 1) {
+              keywords.push(searchText);
+            }
+            var resultItems = [];
+            if (searchText.length > 0) {
+              // perform local searching
+              datas.forEach(function(data) {
+                var isMatch = false;
+                var hitCount = 0;
+                var searchTextCount = 0;
+                var title = data.title.trim();
+                var titleInLowerCase = title.toLowerCase();
+                var content = data.content.trim().replace(/<[^>]+>/g,"");
+                
+                content = unescapeHtml(content);
+                
+                var contentInLowerCase = content.toLowerCase();
+                var articleUrl = decodeURIComponent(data.url).replace(/\/{2,}/g, '/');
+                var indexOfTitle = [];
+                var indexOfContent = [];
+                // only match articles with not empty titles
+                if(title != '') {
+                  keywords.forEach(function(keyword) {
+                    function getIndexByWord(word, text, caseSensitive) {
+                      var wordLen = word.length;
+                      if (wordLen === 0) {
+                        return [];
+                      }
+                      var startPosition = 0, position = [], index = [];
+                      if (!caseSensitive) {
+                        text = text.toLowerCase();
+                        word = word.toLowerCase();
+                      }
+                      while ((position = text.indexOf(word, startPosition)) > -1) {
+                        index.push({position: position, word: word});
+                        startPosition = position + wordLen;
+                      }
+                      return index;
+                    }
+
+                    indexOfTitle = indexOfTitle.concat(getIndexByWord(keyword, titleInLowerCase, false));
+                    indexOfContent = indexOfContent.concat(getIndexByWord(keyword, contentInLowerCase, false));
+                  });
+                  if (indexOfTitle.length > 0 || indexOfContent.length > 0) {
+                    isMatch = true;
+                    hitCount = indexOfTitle.length + indexOfContent.length;
+                  }
+                }
+
+                // show search results
+
+                if (isMatch) {
+                  // sort index by position of keyword
+
+                  [indexOfTitle, indexOfContent].forEach(function (index) {
+                    index.sort(function (itemLeft, itemRight) {
+                      if (itemRight.position !== itemLeft.position) {
+                        return itemRight.position - itemLeft.position;
+                      } else {
+                        return itemLeft.word.length - itemRight.word.length;
+                      }
+                    });
+                  });
+
+                  // merge hits into slices
+
+                  function mergeIntoSlice(text, start, end, index) {
+                    var item = index[index.length - 1];
+                    var position = item.position;
+                    var word = item.word;
+                    var hits = [];
+                    var searchTextCountInSlice = 0;
+                    while (position + word.length <= end && index.length != 0) {
+                      if (word === searchText) {
+                        searchTextCountInSlice++;
+                      }
+                      hits.push({position: position, length: word.length});
+                      var wordEnd = position + word.length;
+
+                      // move to next position of hit
+
+                      index.pop();
+                      while (index.length != 0) {
+                        item = index[index.length - 1];
+                        position = item.position;
+                        word = item.word;
+                        if (wordEnd > position) {
+                          index.pop();
+                        } else {
+                          break;
+                        }
+                      }
+                    }
+                    searchTextCount += searchTextCountInSlice;
+                    return {
+                      hits: hits,
+                      start: start,
+                      end: end,
+                      searchTextCount: searchTextCountInSlice
+                    };
+                  }
+
+                  var slicesOfTitle = [];
+                  if (indexOfTitle.length != 0) {
+                    slicesOfTitle.push(mergeIntoSlice(title, 0, title.length, indexOfTitle));
+                  }
+
+                  var slicesOfContent = [];
+                  while (indexOfContent.length != 0) {
+                    var item = indexOfContent[indexOfContent.length - 1];
+                    var position = item.position;
+                    var word = item.word;
+                    // cut out 100 characters
+                    var start = position - 20;
+                    var end = position + 80;
+                    if(start < 0){
+                      start = 0;
+                    }
+                    if (end < position + word.length) {
+                      end = position + word.length;
+                    }
+                    if(end > content.length){
+                      end = content.length;
+                    }
+                    slicesOfContent.push(mergeIntoSlice(content, start, end, indexOfContent));
+                  }
+
+                  // sort slices in content by search text's count and hits' count
+
+                  slicesOfContent.sort(function (sliceLeft, sliceRight) {
+                    if (sliceLeft.searchTextCount !== sliceRight.searchTextCount) {
+                      return sliceRight.searchTextCount - sliceLeft.searchTextCount;
+                    } else if (sliceLeft.hits.length !== sliceRight.hits.length) {
+                      return sliceRight.hits.length - sliceLeft.hits.length;
+                    } else {
+                      return sliceLeft.start - sliceRight.start;
+                    }
+                  });
+
+                  // select top N slices in content
+
+                  var upperBound = parseInt('1');
+                  if (upperBound >= 0) {
+                    slicesOfContent = slicesOfContent.slice(0, upperBound);
+                  }
+
+                  // highlight title and content
+
+                  function highlightKeyword(text, slice) {
+                    var result = '';
+                    var prevEnd = slice.start;
+                    slice.hits.forEach(function (hit) {
+                      result += text.substring(prevEnd, hit.position);
+                      var end = hit.position + hit.length;
+                      result += '<b class="search-keyword">' + text.substring(hit.position, end) + '</b>';
+                      prevEnd = end;
+                    });
+                    result += text.substring(prevEnd, slice.end);
+                    return result;
+                  }
+
+                  var resultItem = '';
+
+                  if (slicesOfTitle.length != 0) {
+                    resultItem += "<li><a href='" + articleUrl + "' class='search-result-title'>" + highlightKeyword(title, slicesOfTitle[0]) + "</a>";
+                  } else {
+                    resultItem += "<li><a href='" + articleUrl + "' class='search-result-title'>" + title + "</a>";
+                  }
+
+                  slicesOfContent.forEach(function (slice) {
+                    resultItem += "<a href='" + articleUrl + "'>" +
+                      "<p class=\"search-result\">" + highlightKeyword(content, slice) +
+                      "...</p>" + "</a>";
+                  });
+
+                  resultItem += "</li>";
+                  resultItems.push({
+                    item: resultItem,
+                    searchTextCount: searchTextCount,
+                    hitCount: hitCount,
+                    id: resultItems.length
+                  });
+                }
+              })
+            };
+            if (keywords.length === 1 && keywords[0] === "") {
+              resultContent.innerHTML = '<div id="no-result"><i class="fa fa-search fa-5x"></i></div>'
+            } else if (resultItems.length === 0) {
+              resultContent.innerHTML = '<div id="no-result"><i class="fa fa-frown-o fa-5x"></i></div>'
+            } else {
+              resultItems.sort(function (resultLeft, resultRight) {
+                if (resultLeft.searchTextCount !== resultRight.searchTextCount) {
+                  return resultRight.searchTextCount - resultLeft.searchTextCount;
+                } else if (resultLeft.hitCount !== resultRight.hitCount) {
+                  return resultRight.hitCount - resultLeft.hitCount;
+                } else {
+                  return resultRight.id - resultLeft.id;
+                }
+              });
+              var searchResultList = '<ul class=\"search-result-list\">';
+              resultItems.forEach(function (result) {
+                searchResultList += result.item;
+              })
+              searchResultList += "</ul>";
+              resultContent.innerHTML = searchResultList;
+            }
+          }
+
+          if ('auto' === 'auto') {
+            input.addEventListener('input', inputEventFunction);
+          } else {
+            $('.search-icon').click(inputEventFunction);
+            input.addEventListener('keypress', function (event) {
+              if (event.keyCode === 13) {
+                inputEventFunction();
+              }
+            });
+          }
+
+          // remove loading animation
+          $(".local-search-pop-overlay").remove();
+          $('body').css('overflow', '');
+
+          proceedsearch();
+        }
+      });
+    }
+
+    // handle and trigger popup window;
+    $('.popup-trigger').click(function(e) {
+      e.stopPropagation();
+      if (isfetched === false) {
+        searchFunc(path, 'local-search-input', 'local-search-result');
+      } else {
+        proceedsearch();
+      };
+    });
+
+    $('.popup-btn-close').click(onPopupClose);
+    $('.popup').click(function(e){
+      e.stopPropagation();
+    });
+    $(document).on('keyup', function (event) {
+      var shouldDismissSearchPopup = event.which === 27 &&
+        $('.search-popup').is(':visible');
+      if (shouldDismissSearchPopup) {
+        onPopupClose();
+      }
+    });
+  </script>
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+
+  
+  <script>
+    (function(){
+      var bp = document.createElement('script');
+      var curProtocol = window.location.protocol.split(':')[0];
+      if (curProtocol === 'https') {
+        bp.src = 'https://zz.bdstatic.com/linksubmit/push.js'; 
+      }
+      else {
+        bp.src = 'http://push.zhanzhang.baidu.com/push.js';
+      }
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(bp, s);
+    })();
+  </script>
+
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>

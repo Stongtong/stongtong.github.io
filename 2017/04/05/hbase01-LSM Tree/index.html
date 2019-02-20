@@ -1,0 +1,1424 @@
+<!DOCTYPE html>
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+
+<html class="theme-next gemini use-motion" lang="zh-CN">
+<head><meta name="generator" content="Hexo 3.8.0">
+  <meta charset="UTF-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2">
+
+<link rel="stylesheet" href="/css/main.css?v=7.0.0">
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png?v=7.0.0">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png?v=7.0.0">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png?v=7.0.0">
+
+
+  <link rel="mask-icon" href="/images/logo.svg?v=7.0.0" color="#222">
+
+
+
+
+
+
+
+<script id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Gemini',
+    version: '7.0.0',
+    sidebar: {"position":"left","display":"post","offset":12,"b2t":false,"scrollpercent":false,"onmobile":false},
+    fancybox: false,
+    fastclick: false,
+    lazyload: false,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+  
+
+
+
+
+  <meta name="description" content="摘要： HBASE最为出色的功能就是大数据量的写入性能，今天要介绍的就是HBASE中核心的数据结构LSM Tree，该数据结构保证了HBASE的数据写入的性能，废话不多说，开始正文。">
+<meta name="keywords" content="Hbase,LSM Tree">
+<meta property="og:type" content="article">
+<meta property="og:title" content="HBASE中LSM Tree">
+<meta property="og:url" content="https://tongfan.xyz/2017/04/05/hbase01-LSM Tree/index.html">
+<meta property="og:site_name" content="XTong notes">
+<meta property="og:description" content="摘要： HBASE最为出色的功能就是大数据量的写入性能，今天要介绍的就是HBASE中核心的数据结构LSM Tree，该数据结构保证了HBASE的数据写入的性能，废话不多说，开始正文。">
+<meta property="og:locale" content="zh-CN">
+<meta property="og:image" content="https://i.loli.net/2019/02/17/5c693e36000ee.png">
+<meta property="og:image" content="https://i.loli.net/2019/02/17/5c693e38cd05d.png">
+<meta property="og:updated_time" content="2019-02-17T11:00:00.615Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="HBASE中LSM Tree">
+<meta name="twitter:description" content="摘要： HBASE最为出色的功能就是大数据量的写入性能，今天要介绍的就是HBASE中核心的数据结构LSM Tree，该数据结构保证了HBASE的数据写入的性能，废话不多说，开始正文。">
+<meta name="twitter:image" content="https://i.loli.net/2019/02/17/5c693e36000ee.png">
+
+
+
+  <link rel="alternate" href="/atom.xml" title="XTong notes" type="application/atom+xml">
+
+
+
+
+  <link rel="canonical" href="https://tongfan.xyz/2017/04/05/hbase01-LSM Tree/">
+
+
+
+<script id="page.configurations">
+  CONFIG.page = {
+    sidebar: "",
+  };
+</script>
+
+  <title>HBASE中LSM Tree | XTong notes</title>
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .motion-element,
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-title { opacity: initial; }
+
+  .use-motion .logo,
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-CN">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">XTong notes</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+    
+      
+        <h1 class="site-subtitle" itemprop="description">Live beautifully, dream passionately, love completely</h1>
+      
+    
+    
+  </div>
+
+  <div class="site-nav-toggle">
+    <button aria-label="切换导航栏">
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  
+    <ul id="menu" class="menu">
+      
+        
+        
+        
+          
+          <li class="menu-item menu-item-home">
+
+    
+    
+    
+      
+    
+
+    
+      
+    
+
+    <a href="/" rel="section"><i class="menu-item-icon fa fa-fw fa-home"></i> <br>首页</a>
+
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-about">
+
+    
+    
+    
+      
+    
+
+    
+      
+    
+
+    <a href="/about/" rel="section"><i class="menu-item-icon fa fa-fw fa-user"></i> <br>关于</a>
+
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-tags">
+
+    
+    
+    
+      
+    
+
+    
+      
+    
+
+    <a href="/tags/" rel="section"><i class="menu-item-icon fa fa-fw fa-tags"></i> <br>标签<span class="badge">8</span></a>
+
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-categories">
+
+    
+    
+    
+      
+    
+
+    
+      
+    
+
+    <a href="/categories/" rel="section"><i class="menu-item-icon fa fa-fw fa-th"></i> <br>分类<span class="badge">4</span></a>
+
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-archives">
+
+    
+    
+    
+      
+    
+
+    
+      
+    
+
+    <a href="/archives/" rel="section"><i class="menu-item-icon fa fa-fw fa-archive"></i> <br>归档<span class="badge">6</span></a>
+
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-sitemap">
+
+    
+    
+    
+      
+    
+
+    
+      
+    
+
+    <a href="/sitemap.xml" rel="section"><i class="menu-item-icon fa fa-fw fa-sitemap"></i> <br>站点地图</a>
+
+  </li>
+
+      
+      
+        <li class="menu-item menu-item-search">
+          
+            <a href="javascript:;" class="popup-trigger">
+          
+            
+              <i class="menu-item-icon fa fa-search fa-fw"></i> <br>搜索</a>
+        </li>
+      
+    </ul>
+  
+
+  
+
+  
+    <div class="site-search">
+      
+  <div class="popup search-popup local-search-popup">
+  <div class="local-search-header clearfix">
+    <span class="search-icon">
+      <i class="fa fa-search"></i>
+    </span>
+    <span class="popup-btn-close">
+      <i class="fa fa-times-circle"></i>
+    </span>
+    <div class="local-search-input-wrapper">
+      <input autocomplete="off" placeholder="搜索..." spellcheck="false" type="text" id="local-search-input">
+    </div>
+  </div>
+  <div id="local-search-result"></div>
+</div>
+
+
+
+    </div>
+  
+</nav>
+
+
+
+  
+
+
+
+</div>
+    </header>
+
+    
+
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+            
+
+          
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://tongfan.xyz/2017/04/05/hbase01-LSM Tree/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="XiaoTong Wang">
+      <meta itemprop="description" content="You Never Know Who You Are">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="XTong notes">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h2 class="post-title" itemprop="name headline">HBASE中LSM Tree
+
+              
+            
+          </h2>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+
+            
+            
+            
+
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+
+              
+                
+              
+
+              <time title="创建时间：2017-04-05 10:30:44" itemprop="dateCreated datePublished" datetime="2017-04-05T10:30:44+08:00">2017-04-05</time>
+            
+
+            
+              
+
+              
+                
+                <span class="post-meta-divider">|</span>
+                
+
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-calendar-check-o"></i>
+                </span>
+                
+                  <span class="post-meta-item-text">更新于</span>
+                
+                <time title="修改时间：2019-02-17 19:00:00" itemprop="dateModified" datetime="2019-02-17T19:00:00+08:00">2019-02-17</time>
+              
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing"><a href="/categories/Hbase/" itemprop="url" rel="index"><span itemprop="name">Hbase</span></a></span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+            
+              
+              <span class="post-comments-count">
+                <span class="post-meta-divider">|</span>
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-comment-o"></i>
+                </span>
+            
+                <span class="post-meta-item-text">评论数：</span>
+                <a href="/2017/04/05/hbase01-LSM Tree/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count valine-comment-count" data-xid="/2017/04/05/hbase01-LSM Tree/" itemprop="commentCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p><strong>摘要</strong>： HBASE最为出色的功能就是大数据量的写入性能，今天要介绍的就是HBASE中核心的数据结构LSM Tree，该数据结构保证了HBASE的数据写入的性能，废话不多说，开始正文。</p>
+<a id="more"></a>
+<h1 id="1-LSM-Tree由来"><a href="#1-LSM-Tree由来" class="headerlink" title="1 LSM Tree由来"></a>1 LSM Tree由来</h1><p>​    LSM Tree，全称<strong>Log-structured merge-tree</strong>，讲LSM树之前，需要提下三种基本的存储引擎，这样才能清楚LSM树的由来。</p>
+<h2 id="（1）哈希存储引擎"><a href="#（1）哈希存储引擎" class="headerlink" title="（1）哈希存储引擎"></a>（1）哈希存储引擎</h2><p>​    哈希存储引擎，就是以哈希表为基础持久化实现，支持增、删、改以及随机读取操作，<strong>但不支持顺序扫描</strong>，对应的存储系统为key-value存储系统。对于key-value的插入、查询、删除操作，哈希表的复杂度都是O(1)；但如果在需求中需要进行顺序扫描或者范围查找，hash并不能够支持。</p>
+<h2 id="（2）B树存储引擎"><a href="#（2）B树存储引擎" class="headerlink" title="（2）B树存储引擎"></a>（2）B树存储引擎</h2><p>​    B树存储引擎是以B树（一般都是B+树）的持久化实现，该种数据结构不仅支持单条记录的增、删、读、改操作，还支持顺序扫描（下面有详细的解释），这里对B树、B+树进行简单的复习。</p>
+<p>​    走进搜索引擎的作者梁斌老师针对B树、B+树给出了他的意见，下面引用其文章中的话。</p>
+<blockquote>
+<p>​    “B+树还有一个最大的好处，方便扫库，B树必须用中序遍历的方法按序扫库，而B+树直接从叶子结点挨个扫一遍就完了，B+树支持range-query非常方便，而B树不支持。这是数据库选用B+树的最主要原因。“</p>
+</blockquote>
+<blockquote>
+<p><strong>为什么说B+tree比B树更适合实际应用中操作系统的文件索引和数据库索引</strong>？</p>
+</blockquote>
+<blockquote>
+<p>（1) B+ tree的磁盘读写代价更低<br>     B+tree的内部结点并没有指向关键字具体信息的指针。因此其内部结点相对B树更小。如果把所有同一内部结点的关键字存放在同一盘块中，那么盘块所能容纳的关键字数量也越多。一次性读入内存中的需要查找的关键字也就越多。相对来说IO读写次数也就降低了。</p>
+<p>​    举个例子，假设磁盘中的一个盘块容纳16bytes，而一个关键字2bytes，一个关键字具体信息指针2bytes。一棵9阶B-tree(一个结点最多8个关键字)的内部结点需要2个盘快。而B+ 树内部结点只需要1个盘快。当需要把内部结点读入内存中的时候，B 树就比B+ 树多一次盘块查找时间(在磁盘中就是盘片旋转的时间)。</p>
+<p>（2）B+tree的查询效率更加稳定<br>​     由于非叶子结点并不是最终指向文件内容的结点，而只是叶子结点中关键字的索引。所以任何关键字的查找必须走一条从根结点到叶子结点的路。所有关键字查询的路径长度相同，导致每一个数据的查询效率相当。</p>
+<p>（3）B+ 树在顺序查询方面更加优秀</p>
+<p>​    B树在提高了磁盘IO性能的同时并没有解决元素遍历的效率低下的问题。正是为了解决这个问题，B+树应运而生。B+树只要遍历叶子节点就可以实现整棵树的遍历。而且在数据库中基于范围的查询是非常频繁的，而B树不支持这样的操作（或者说效率太低）。</p>
+</blockquote>
+<blockquote>
+<p><strong>任何一种数据结构都是针对特定场景的，B+树也不例外，其缺点为：</strong></p>
+</blockquote>
+<blockquote>
+<p>​    B+树最大的性能问题是会产生大量的随机IO，随着新数据的插入，叶子节点会慢慢分裂，逻辑上连续的叶子节点在物理上往往不连续，甚至分离的很远，但做范围查询时，会产生大量读随机IO。对于大量的随机写也一样，举一个插入key跨度很大的例子，如7-&gt;1000-&gt;3-&gt;2000 … 新插入的数据存储在磁盘上相隔很远，会产生大量的随机写IO.</p>
+<p>​    从上面可以看出，低下的磁盘寻道速度严重影响性能（近些年来，磁盘寻道速度的发展几乎处于停滞的状态）</p>
+</blockquote>
+<h2 id="（3）LSM树"><a href="#（3）LSM树" class="headerlink" title="（3）LSM树"></a>（3）LSM树</h2><p>​    LSM树存储引擎和B树存储引擎一样，同样支持增、删、读、改、顺序扫描操作。而且其通过批量存储技术，规避磁盘随机写入问题，但同时带来的问题就是<strong>LSM树和B+树相比，LSM树牺牲了部分读性能，用来大幅提高写性能。</strong></p>
+<p>​    下面将对LSM tree进行详细介绍。</p>
+<h1 id="2-LSM-Tree原理"><a href="#2-LSM-Tree原理" class="headerlink" title="2 LSM Tree原理"></a>2 LSM Tree原理</h1><h2 id="2-1-设计思想"><a href="#2-1-设计思想" class="headerlink" title="2.1 设计思想"></a>2.1 设计思想</h2><p>​    LSM树的设计思想非常朴素，简而言之就是<strong>将对数据的修改增量保持在内存中，达到指定的大小限制后将这些修改操作批量写入磁盘</strong>，其具体做法是把一棵大树拆分成N棵小树，它首先将内容写入内存中，随着小树越来越大，当达到内存写入阈值后，内存中的小树会flush到磁盘中，这样磁盘中的树定期做merge操作，合并成一棵稳定的大树（<strong>优化数据的读性能</strong>）。当进行数据读取时，需要合并磁盘中历史数据和内存中最近修改操作，综合两者才能进行完整的数据查找操作。</p>
+<p>​    批量操作减少了磁盘磁臂的移动次数降低了进行数据插入时磁盘磁臂的开销，所以写入性能大大提升，同时读性能有所下降，LSM在进行需要即时响应的操作时会损失I/O效率，最适用于索引插入比查询操作多的情况。</p>
+<h2 id="2-2-详细说明"><a href="#2-2-详细说明" class="headerlink" title="2.2 详细说明"></a>2.2 详细说明</h2><p>​    LSM-Tree主题思想为划分成不同等级的树。可以想象一份索引由两棵树组成：一个存在于内存（可以使其他树结构），一个存在于磁盘（如下图）。</p>
+<p><img src="https://i.loli.net/2019/02/17/5c693e36000ee.png" alt></p>
+<p>​    数据首先会插入到内存中的树，为了防止数据丢失，写内存的同时需要暂时持久化到磁盘即输入数据时数据会以完全有序的形式先存储在日志文件中（对应HBase的MemStore和HLog）。当日志文件被修改时，对应的更新会被先保存在内存中来加速查询。</p>
+<p>​    当内存中树的数据达到阈值时，会进行合并操作。合并操作会从左至右遍历内存中的叶子节点与磁盘中树的叶子节点进行合并，当合并的数据量达到磁盘的存储页的大小时，会将合并的数据持久化到磁盘。同时更新父亲节点对叶子节点的指针（如下图）。     </p>
+<p><img src="https://i.loli.net/2019/02/17/5c693e38cd05d.png" alt="lsm11"></p>
+<p>​    之前存在于磁盘的叶子节点被合并后，这些数据并不会被删除，这些数据会复制一份并与内存中的数据一起顺序写到磁盘。查找通过合并的方式完成，首先搜索内存存储结构，接下来是磁盘存储结构。</p>
+<p>​    LSM树所有节点都是满的并按页存储，经过多次的flush会创建很多数据存储文件，后台线程会将小文件聚合成大文件，因此磁盘的寻道操作就会被限制在一定数目的数据存储文件中，以优化读性能。磁盘上的树结构也可以分割成多个存储文件，因为所有的存储数据都是按照Key有序排列的，因此在现有节点中插入新的关键字不需要重新排序。</p>
+<p>​    LSM-Tree属于传输型，在磁盘传输速率上进行文件的排序和合并以及日志操作，可以更好的拓展到更大的数据规模上，因为它会使用日志文件和一个内存存储结构把随机写操作转化为顺序写，读写独立，不会产生两种操作的竞争。 </p>
+<h1 id="3-hbase中的LSM-tree"><a href="#3-hbase中的LSM-tree" class="headerlink" title="3 hbase中的LSM-tree"></a>3 hbase中的LSM-tree</h1><h2 id="3-1-原理"><a href="#3-1-原理" class="headerlink" title="3.1 原理"></a>3.1 原理</h2><p>HBASE中，数据会先写到内存中，为了防止内存数据丢失，写内存的同时需要持久化到磁盘，对应了HBase的MemStore和HLog（即HBASE中wal，write ahead log）。</p>
+<p>​    MemStore中的数据达到一定的阈值之后，需要将数据刷写到磁盘，即生成HFile（也是一颗小的B+树）文件。</p>
+<p>​    hbase中的minor merge（少量HFile小文件合并）、 major merge（一个region的所有HFile文件合并，可能包括数据删除操作）执行compact操作，同时删除无效数据（过期及删除的数据），多棵小树在这个时机合并成大树，来增强（稳定）读性能。</p>
+<p>​    hbase在实现中，是把整个内存数据达到一定阈值后，flush到disk中，形成一个file，这个file的存储也就是一个小的B+树，因为hbase一般是部署在hdfs上，hdfs不支持对文件的update操作，所以hbase是这样全部内存flush，而不是和磁盘中的小树merge update，这个设计也就能讲通了。内存flush到磁盘上的小树，定期也会合并成一个大树。整体上hbase就是用了lsm tree的思路。</p>
+<h2 id="3-2-优化"><a href="#3-2-优化" class="headerlink" title="3.2 优化"></a>3.2 优化</h2><p><strong>针对LSM树读性能hbase的优化：</strong></p>
+<p>​    <strong>Bloom-filter</strong>:就是个带随机概率的bitmap,可以快速的告诉你，某一个小的有序结构里有没有指定的数据。于是就可以不用二分查找，而只需简单的计算几次就能知道数据是否在某个小集合里啦。效率得到提升，但付出空间代价。</p>
+<p>​    <strong>compact</strong>：小树合并为大树，因为小树性能有问题，所以要有个进程不断地将小树合并到大树上，这样大部分的老数据查询也可以直接使用log2N的方式找到，不需要再进行(N/m)*log2n的查询了。</p>
+<h1 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h1><p>​    HBASE中主要使用LSM-Tree来保证大量写入操作的性能，现在对HBASE的定位也主要集中在数据仓库的角色，存放海量数据，因此其写入需求远大于读取需求；任何一种数据库或者是一种组件，只是针对某些特定场景而存在，不可能针对所有的场景都是适合的，所以在进行技术选型或者产品定位时，在这一方面多考虑一点是特别重要的。</p>
+<div class="note primary">
+            <h4 id="本文作者：tongtong"><a href="#本文作者：tongtong" class="headerlink" title="本文作者：tongtong"></a>本文作者：tongtong</h4><h4 id="本文链接：https-stongtong-github-io"><a href="#本文链接：https-stongtong-github-io" class="headerlink" title="本文链接：https://stongtong.github.io/"></a>本文链接：<a href="https://stongtong.github.io/">https://stongtong.github.io/</a></h4><h4 id="版权申明：网站内容为tongtong所有，转载请注明出处。"><a href="#版权申明：网站内容为tongtong所有，转载请注明出处。" class="headerlink" title="版权申明：网站内容为tongtong所有，转载请注明出处。"></a>版权申明：网站内容为tongtong所有，转载请注明出处。</h4>
+          </div>
+      
+    </div>
+
+    
+
+    
+    
+    
+
+    
+
+    
+      
+    
+    
+
+    
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/Hbase/" rel="tag"># Hbase</a>
+          
+            <a href="/tags/LSM-Tree/" rel="tag"># LSM Tree</a>
+          
+        </div>
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2016/08/30/Hexo常用命令记录/" rel="next" title="Hexo常用命令记录">
+                <i class="fa fa-chevron-left"></i> Hexo常用命令记录
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2018/01/13/markdown中的绘图语法-md/" rel="prev" title="markdown中的绘图语法">
+                markdown中的绘图语法 <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+  </div>
+
+
+          </div>
+          
+
+  
+    <div class="comments" id="comments">
+    </div>
+
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+            
+              <img class="site-author-image" itemprop="image" src="/images/avatar.gif" alt="XiaoTong Wang">
+            
+              <p class="site-author-name" itemprop="name">XiaoTong Wang</p>
+              <p class="site-description motion-element" itemprop="description">You Never Know Who You Are</p>
+          </div>
+
+          
+            <nav class="site-state motion-element">
+              
+                <div class="site-state-item site-state-posts">
+                
+                  <a href="/archives/">
+                
+                    <span class="site-state-item-count">6</span>
+                    <span class="site-state-item-name">日志</span>
+                  </a>
+                </div>
+              
+
+              
+                
+                
+                <div class="site-state-item site-state-categories">
+                  <a href="/categories/index.html">
+                    
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                    <span class="site-state-item-count">4</span>
+                    <span class="site-state-item-name">分类</span>
+                  </a>
+                </div>
+              
+
+              
+                
+                
+                <div class="site-state-item site-state-tags">
+                  <a href="/tags/index.html">
+                    
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                    <span class="site-state-item-count">8</span>
+                    <span class="site-state-item-name">标签</span>
+                  </a>
+                </div>
+              
+            </nav>
+          
+
+          
+            <div class="feed-link motion-element">
+              <a href="/atom.xml" rel="alternate">
+                <i class="fa fa-rss"></i>
+                RSS
+              </a>
+            </div>
+          
+
+          
+            <div class="links-of-author motion-element">
+              
+                <span class="links-of-author-item">
+                  
+                  
+                    
+                  
+                  
+                    
+                  
+                  <a href="https://github.com/Stongtong" title="GitHub &rarr; https://github.com/Stongtong" rel="noopener" target="_blank"><i class="fa fa-fw fa-github"></i>GitHub</a>
+                </span>
+              
+                <span class="links-of-author-item">
+                  
+                  
+                    
+                  
+                  
+                    
+                  
+                  <a href="mailto:tongxiao@outlook.com" title="E-Mail &rarr; mailto:tongxiao@outlook.com" rel="noopener" target="_blank"><i class="fa fa-fw fa-envelope"></i>E-Mail</a>
+                </span>
+              
+                <span class="links-of-author-item">
+                  
+                  
+                    
+                  
+                  
+                    
+                  
+                  <a href="https://www.zhihu.com/people/wang-xiao-tong-64-73/activities" title="Zhihu &rarr; https://www.zhihu.com/people/wang-xiao-tong-64-73/activities" rel="noopener" target="_blank"><i class="fa fa-fw fa-flag"></i>Zhihu</a>
+                </span>
+              
+                <span class="links-of-author-item">
+                  
+                  
+                    
+                  
+                  
+                    
+                  
+                  <a href="http://blog.csdn.net/wangxiaotongfan" title="CSDN &rarr; http://blog.csdn.net/wangxiaotongfan" rel="noopener" target="_blank"><i class="fa fa-fw fa-coffee"></i>CSDN</a>
+                </span>
+              
+            </div>
+          
+
+          
+
+          
+          
+
+          
+            
+          
+          
+
+        </div>
+      </div>
+
+      
+      <!--noindex-->
+        <div class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+            
+            
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#1-LSM-Tree由来"><span class="nav-number">1.</span> <span class="nav-text">1 LSM Tree由来</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#（1）哈希存储引擎"><span class="nav-number">1.1.</span> <span class="nav-text">（1）哈希存储引擎</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#（2）B树存储引擎"><span class="nav-number">1.2.</span> <span class="nav-text">（2）B树存储引擎</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#（3）LSM树"><span class="nav-number">1.3.</span> <span class="nav-text">（3）LSM树</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#2-LSM-Tree原理"><span class="nav-number">2.</span> <span class="nav-text">2 LSM Tree原理</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#2-1-设计思想"><span class="nav-number">2.1.</span> <span class="nav-text">2.1 设计思想</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#2-2-详细说明"><span class="nav-number">2.2.</span> <span class="nav-text">2.2 详细说明</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#3-hbase中的LSM-tree"><span class="nav-number">3.</span> <span class="nav-text">3 hbase中的LSM-tree</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#3-1-原理"><span class="nav-number">3.1.</span> <span class="nav-text">3.1 原理</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#3-2-优化"><span class="nav-number">3.2.</span> <span class="nav-text">3.2 优化</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#总结"><span class="nav-number">4.</span> <span class="nav-text">总结</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#本文作者：tongtong"><span class="nav-number">4.0.0.1.</span> <span class="nav-text">本文作者：tongtong</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#本文链接：https-stongtong-github-io"><span class="nav-number">4.0.0.2.</span> <span class="nav-text">本文链接：https://stongtong.github.io/</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#版权申明：网站内容为tongtong所有，转载请注明出处。"><span class="nav-number">4.0.0.3.</span> <span class="nav-text">版权申明：网站内容为tongtong所有，转载请注明出处。</span></a></li></ol></li></ol></div>
+            
+
+          </div>
+        </div>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; <span itemprop="copyrightYear">2019</span>
+  <span class="with-love" id="animate">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">XiaoTong Wang</span>
+
+  
+
+  
+</div>
+
+
+
+
+
+
+
+
+
+
+  <script src="https://unpkg.com/mermaid@7.1.2/dist/mermaid.min.js"></script>
+  <script>
+    if (window.mermaid) {
+      mermaid.initialize({theme: 'forest'});
+    }
+  </script>
+
+
+        
+
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+    
+
+    
+
+    
+  </div>
+
+  
+
+<script>
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+    
+    
+  
+  <script color="0,0,255" opacity="0.5" zindex="-1" count="99" src="/lib/canvas-nest/canvas-nest.min.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  <script src="/lib/jquery/index.js?v=2.1.3"></script>
+
+  
+  <script src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+
+  
+  <script src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+
+  
+
+
+  <script src="/js/src/utils.js?v=7.0.0"></script>
+
+  <script src="/js/src/motion.js?v=7.0.0"></script>
+
+
+
+  
+  
+
+
+  <script src="/js/src/affix.js?v=7.0.0"></script>
+
+  <script src="/js/src/schemes/pisces.js?v=7.0.0"></script>
+
+
+
+
+  
+  <script src="/js/src/scrollspy.js?v=7.0.0"></script>
+<script src="/js/src/post-details.js?v=7.0.0"></script>
+
+
+
+  
+
+
+  <script src="/js/src/bootstrap.js?v=7.0.0"></script>
+
+
+
+  
+  
+
+<script src="//cdn1.lncld.net/static/js/3.11.1/av-min.js"></script>
+
+
+
+<script src="//unpkg.com/valine/dist/Valine.min.js"></script>
+
+<script>
+  var GUEST = ['nick', 'mail', 'link'];
+  var guest = 'nick,mail';
+  guest = guest.split(',').filter(function(item) {
+    return GUEST.indexOf(item) > -1;
+  });
+  new Valine({
+    el: '#comments',
+    verify: true,
+    notify: true,
+    appId: 'C5p2It82joj83Mzm0milY5BK-gzGzoHsz',
+    appKey: 'iDq8etLnrVzoVdfbWoOOow4L',
+    placeholder: 'Tell me your story...',
+    avatar: 'mm',
+    meta: guest,
+    pageSize: '10' || 10,
+    visitor: false
+  });
+</script>
+
+
+
+
+  
+
+
+  
+  <script>
+    // Popup Window;
+    var isfetched = false;
+    var isXml = true;
+    // Search DB path;
+    var search_path = "search.xml";
+    if (search_path.length === 0) {
+      search_path = "search.xml";
+    } else if (/json$/i.test(search_path)) {
+      isXml = false;
+    }
+    var path = "/" + search_path;
+    // monitor main search box;
+
+    var onPopupClose = function (e) {
+      $('.popup').hide();
+      $('#local-search-input').val('');
+      $('.search-result-list').remove();
+      $('#no-result').remove();
+      $(".local-search-pop-overlay").remove();
+      $('body').css('overflow', '');
+    }
+
+    function proceedsearch() {
+      $("body")
+        .append('<div class="search-popup-overlay local-search-pop-overlay"></div>')
+        .css('overflow', 'hidden');
+      $('.search-popup-overlay').click(onPopupClose);
+      $('.popup').toggle();
+      var $localSearchInput = $('#local-search-input');
+      $localSearchInput.attr("autocapitalize", "none");
+      $localSearchInput.attr("autocorrect", "off");
+      $localSearchInput.focus();
+    }
+
+    // search function;
+    var searchFunc = function(path, search_id, content_id) {
+      'use strict';
+
+      // start loading animation
+      $("body")
+        .append('<div class="search-popup-overlay local-search-pop-overlay">' +
+          '<div id="search-loading-icon">' +
+          '<i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>' +
+          '</div>' +
+          '</div>')
+        .css('overflow', 'hidden');
+      $("#search-loading-icon").css('margin', '20% auto 0 auto').css('text-align', 'center');
+
+      
+        // ref: https://github.com/ForbesLindesay/unescape-html
+        var unescapeHtml = function(html) {
+          return String(html)
+            .replace(/&quot;/g, '"')
+            .replace(/&#39;/g, '\'')
+            .replace(/&#x3A;/g, ':')
+            // replace all the other &#x; chars
+            .replace(/&#(\d+);/g, function (m, p) { return String.fromCharCode(p); })
+            .replace(/&lt;/g, '<')
+            .replace(/&gt;/g, '>')
+            .replace(/&amp;/g, '&');
+        };
+      
+
+      $.ajax({
+        url: path,
+        dataType: isXml ? "xml" : "json",
+        async: true,
+        success: function(res) {
+          // get the contents from search data
+          isfetched = true;
+          $('.popup').detach().appendTo('.header-inner');
+          var datas = isXml ? $("entry", res).map(function() {
+            return {
+              title: $("title", this).text(),
+              content: $("content",this).text(),
+              url: $("url" , this).text()
+            };
+          }).get() : res;
+          var input = document.getElementById(search_id);
+          var resultContent = document.getElementById(content_id);
+          var inputEventFunction = function() {
+            var searchText = input.value.trim().toLowerCase();
+            var keywords = searchText.split(/[\s\-]+/);
+            if (keywords.length > 1) {
+              keywords.push(searchText);
+            }
+            var resultItems = [];
+            if (searchText.length > 0) {
+              // perform local searching
+              datas.forEach(function(data) {
+                var isMatch = false;
+                var hitCount = 0;
+                var searchTextCount = 0;
+                var title = data.title.trim();
+                var titleInLowerCase = title.toLowerCase();
+                var content = data.content.trim().replace(/<[^>]+>/g,"");
+                
+                content = unescapeHtml(content);
+                
+                var contentInLowerCase = content.toLowerCase();
+                var articleUrl = decodeURIComponent(data.url).replace(/\/{2,}/g, '/');
+                var indexOfTitle = [];
+                var indexOfContent = [];
+                // only match articles with not empty titles
+                if(title != '') {
+                  keywords.forEach(function(keyword) {
+                    function getIndexByWord(word, text, caseSensitive) {
+                      var wordLen = word.length;
+                      if (wordLen === 0) {
+                        return [];
+                      }
+                      var startPosition = 0, position = [], index = [];
+                      if (!caseSensitive) {
+                        text = text.toLowerCase();
+                        word = word.toLowerCase();
+                      }
+                      while ((position = text.indexOf(word, startPosition)) > -1) {
+                        index.push({position: position, word: word});
+                        startPosition = position + wordLen;
+                      }
+                      return index;
+                    }
+
+                    indexOfTitle = indexOfTitle.concat(getIndexByWord(keyword, titleInLowerCase, false));
+                    indexOfContent = indexOfContent.concat(getIndexByWord(keyword, contentInLowerCase, false));
+                  });
+                  if (indexOfTitle.length > 0 || indexOfContent.length > 0) {
+                    isMatch = true;
+                    hitCount = indexOfTitle.length + indexOfContent.length;
+                  }
+                }
+
+                // show search results
+
+                if (isMatch) {
+                  // sort index by position of keyword
+
+                  [indexOfTitle, indexOfContent].forEach(function (index) {
+                    index.sort(function (itemLeft, itemRight) {
+                      if (itemRight.position !== itemLeft.position) {
+                        return itemRight.position - itemLeft.position;
+                      } else {
+                        return itemLeft.word.length - itemRight.word.length;
+                      }
+                    });
+                  });
+
+                  // merge hits into slices
+
+                  function mergeIntoSlice(text, start, end, index) {
+                    var item = index[index.length - 1];
+                    var position = item.position;
+                    var word = item.word;
+                    var hits = [];
+                    var searchTextCountInSlice = 0;
+                    while (position + word.length <= end && index.length != 0) {
+                      if (word === searchText) {
+                        searchTextCountInSlice++;
+                      }
+                      hits.push({position: position, length: word.length});
+                      var wordEnd = position + word.length;
+
+                      // move to next position of hit
+
+                      index.pop();
+                      while (index.length != 0) {
+                        item = index[index.length - 1];
+                        position = item.position;
+                        word = item.word;
+                        if (wordEnd > position) {
+                          index.pop();
+                        } else {
+                          break;
+                        }
+                      }
+                    }
+                    searchTextCount += searchTextCountInSlice;
+                    return {
+                      hits: hits,
+                      start: start,
+                      end: end,
+                      searchTextCount: searchTextCountInSlice
+                    };
+                  }
+
+                  var slicesOfTitle = [];
+                  if (indexOfTitle.length != 0) {
+                    slicesOfTitle.push(mergeIntoSlice(title, 0, title.length, indexOfTitle));
+                  }
+
+                  var slicesOfContent = [];
+                  while (indexOfContent.length != 0) {
+                    var item = indexOfContent[indexOfContent.length - 1];
+                    var position = item.position;
+                    var word = item.word;
+                    // cut out 100 characters
+                    var start = position - 20;
+                    var end = position + 80;
+                    if(start < 0){
+                      start = 0;
+                    }
+                    if (end < position + word.length) {
+                      end = position + word.length;
+                    }
+                    if(end > content.length){
+                      end = content.length;
+                    }
+                    slicesOfContent.push(mergeIntoSlice(content, start, end, indexOfContent));
+                  }
+
+                  // sort slices in content by search text's count and hits' count
+
+                  slicesOfContent.sort(function (sliceLeft, sliceRight) {
+                    if (sliceLeft.searchTextCount !== sliceRight.searchTextCount) {
+                      return sliceRight.searchTextCount - sliceLeft.searchTextCount;
+                    } else if (sliceLeft.hits.length !== sliceRight.hits.length) {
+                      return sliceRight.hits.length - sliceLeft.hits.length;
+                    } else {
+                      return sliceLeft.start - sliceRight.start;
+                    }
+                  });
+
+                  // select top N slices in content
+
+                  var upperBound = parseInt('1');
+                  if (upperBound >= 0) {
+                    slicesOfContent = slicesOfContent.slice(0, upperBound);
+                  }
+
+                  // highlight title and content
+
+                  function highlightKeyword(text, slice) {
+                    var result = '';
+                    var prevEnd = slice.start;
+                    slice.hits.forEach(function (hit) {
+                      result += text.substring(prevEnd, hit.position);
+                      var end = hit.position + hit.length;
+                      result += '<b class="search-keyword">' + text.substring(hit.position, end) + '</b>';
+                      prevEnd = end;
+                    });
+                    result += text.substring(prevEnd, slice.end);
+                    return result;
+                  }
+
+                  var resultItem = '';
+
+                  if (slicesOfTitle.length != 0) {
+                    resultItem += "<li><a href='" + articleUrl + "' class='search-result-title'>" + highlightKeyword(title, slicesOfTitle[0]) + "</a>";
+                  } else {
+                    resultItem += "<li><a href='" + articleUrl + "' class='search-result-title'>" + title + "</a>";
+                  }
+
+                  slicesOfContent.forEach(function (slice) {
+                    resultItem += "<a href='" + articleUrl + "'>" +
+                      "<p class=\"search-result\">" + highlightKeyword(content, slice) +
+                      "...</p>" + "</a>";
+                  });
+
+                  resultItem += "</li>";
+                  resultItems.push({
+                    item: resultItem,
+                    searchTextCount: searchTextCount,
+                    hitCount: hitCount,
+                    id: resultItems.length
+                  });
+                }
+              })
+            };
+            if (keywords.length === 1 && keywords[0] === "") {
+              resultContent.innerHTML = '<div id="no-result"><i class="fa fa-search fa-5x"></i></div>'
+            } else if (resultItems.length === 0) {
+              resultContent.innerHTML = '<div id="no-result"><i class="fa fa-frown-o fa-5x"></i></div>'
+            } else {
+              resultItems.sort(function (resultLeft, resultRight) {
+                if (resultLeft.searchTextCount !== resultRight.searchTextCount) {
+                  return resultRight.searchTextCount - resultLeft.searchTextCount;
+                } else if (resultLeft.hitCount !== resultRight.hitCount) {
+                  return resultRight.hitCount - resultLeft.hitCount;
+                } else {
+                  return resultRight.id - resultLeft.id;
+                }
+              });
+              var searchResultList = '<ul class=\"search-result-list\">';
+              resultItems.forEach(function (result) {
+                searchResultList += result.item;
+              })
+              searchResultList += "</ul>";
+              resultContent.innerHTML = searchResultList;
+            }
+          }
+
+          if ('auto' === 'auto') {
+            input.addEventListener('input', inputEventFunction);
+          } else {
+            $('.search-icon').click(inputEventFunction);
+            input.addEventListener('keypress', function (event) {
+              if (event.keyCode === 13) {
+                inputEventFunction();
+              }
+            });
+          }
+
+          // remove loading animation
+          $(".local-search-pop-overlay").remove();
+          $('body').css('overflow', '');
+
+          proceedsearch();
+        }
+      });
+    }
+
+    // handle and trigger popup window;
+    $('.popup-trigger').click(function(e) {
+      e.stopPropagation();
+      if (isfetched === false) {
+        searchFunc(path, 'local-search-input', 'local-search-result');
+      } else {
+        proceedsearch();
+      };
+    });
+
+    $('.popup-btn-close').click(onPopupClose);
+    $('.popup').click(function(e){
+      e.stopPropagation();
+    });
+    $(document).on('keyup', function (event) {
+      var shouldDismissSearchPopup = event.which === 27 &&
+        $('.search-popup').is(':visible');
+      if (shouldDismissSearchPopup) {
+        onPopupClose();
+      }
+    });
+  </script>
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+
+  
+  <script>
+    (function(){
+      var bp = document.createElement('script');
+      var curProtocol = window.location.protocol.split(':')[0];
+      if (curProtocol === 'https') {
+        bp.src = 'https://zz.bdstatic.com/linksubmit/push.js'; 
+      }
+      else {
+        bp.src = 'http://push.zhanzhang.baidu.com/push.js';
+      }
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(bp, s);
+    })();
+  </script>
+
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>

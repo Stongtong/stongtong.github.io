@@ -1,0 +1,1435 @@
+<!DOCTYPE html>
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+
+<html class="theme-next gemini use-motion" lang="zh-CN">
+<head><meta name="generator" content="Hexo 3.8.0">
+  <meta charset="UTF-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2">
+
+<link rel="stylesheet" href="/css/main.css?v=7.0.0">
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png?v=7.0.0">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png?v=7.0.0">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png?v=7.0.0">
+
+
+  <link rel="mask-icon" href="/images/logo.svg?v=7.0.0" color="#222">
+
+
+
+
+
+
+
+<script id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Gemini',
+    version: '7.0.0',
+    sidebar: {"position":"left","display":"post","offset":12,"b2t":false,"scrollpercent":false,"onmobile":false},
+    fancybox: false,
+    fastclick: false,
+    lazyload: false,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+  
+
+
+
+
+  <meta name="description" content="摘要：由于HBASE中使用LSM，所以在HBASE中插入数据时，是批量从内存中flush到磁盘（HDFS），本文介绍总结HBASE中触发flush动作的详细条件，从而对flush过程进行优化。（本文参考自HBASE社区文章）">
+<meta name="keywords" content="Hbase,flush">
+<meta property="og:type" content="article">
+<meta property="og:title" content="HBASE中的数据刷写">
+<meta property="og:url" content="https://tongfan.xyz/2019/02/17/HBASE中的数据刷写/index.html">
+<meta property="og:site_name" content="XTong notes">
+<meta property="og:description" content="摘要：由于HBASE中使用LSM，所以在HBASE中插入数据时，是批量从内存中flush到磁盘（HDFS），本文介绍总结HBASE中触发flush动作的详细条件，从而对flush过程进行优化。（本文参考自HBASE社区文章）">
+<meta property="og:locale" content="zh-CN">
+<meta property="og:image" content="https://i.loli.net/2019/02/17/5c694ac4a683b.png">
+<meta property="og:updated_time" content="2019-02-18T12:18:01.725Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="HBASE中的数据刷写">
+<meta name="twitter:description" content="摘要：由于HBASE中使用LSM，所以在HBASE中插入数据时，是批量从内存中flush到磁盘（HDFS），本文介绍总结HBASE中触发flush动作的详细条件，从而对flush过程进行优化。（本文参考自HBASE社区文章）">
+<meta name="twitter:image" content="https://i.loli.net/2019/02/17/5c694ac4a683b.png">
+
+
+
+  <link rel="alternate" href="/atom.xml" title="XTong notes" type="application/atom+xml">
+
+
+
+
+  <link rel="canonical" href="https://tongfan.xyz/2019/02/17/HBASE中的数据刷写/">
+
+
+
+<script id="page.configurations">
+  CONFIG.page = {
+    sidebar: "",
+  };
+</script>
+
+  <title>HBASE中的数据刷写 | XTong notes</title>
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .motion-element,
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-title { opacity: initial; }
+
+  .use-motion .logo,
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-CN">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">XTong notes</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+    
+      
+        <h1 class="site-subtitle" itemprop="description">Live beautifully, dream passionately, love completely</h1>
+      
+    
+    
+  </div>
+
+  <div class="site-nav-toggle">
+    <button aria-label="切换导航栏">
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  
+    <ul id="menu" class="menu">
+      
+        
+        
+        
+          
+          <li class="menu-item menu-item-home">
+
+    
+    
+    
+      
+    
+
+    
+      
+    
+
+    <a href="/" rel="section"><i class="menu-item-icon fa fa-fw fa-home"></i> <br>首页</a>
+
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-about">
+
+    
+    
+    
+      
+    
+
+    
+      
+    
+
+    <a href="/about/" rel="section"><i class="menu-item-icon fa fa-fw fa-user"></i> <br>关于</a>
+
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-tags">
+
+    
+    
+    
+      
+    
+
+    
+      
+    
+
+    <a href="/tags/" rel="section"><i class="menu-item-icon fa fa-fw fa-tags"></i> <br>标签<span class="badge">8</span></a>
+
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-categories">
+
+    
+    
+    
+      
+    
+
+    
+      
+    
+
+    <a href="/categories/" rel="section"><i class="menu-item-icon fa fa-fw fa-th"></i> <br>分类<span class="badge">4</span></a>
+
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-archives">
+
+    
+    
+    
+      
+    
+
+    
+      
+    
+
+    <a href="/archives/" rel="section"><i class="menu-item-icon fa fa-fw fa-archive"></i> <br>归档<span class="badge">6</span></a>
+
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-sitemap">
+
+    
+    
+    
+      
+    
+
+    
+      
+    
+
+    <a href="/sitemap.xml" rel="section"><i class="menu-item-icon fa fa-fw fa-sitemap"></i> <br>站点地图</a>
+
+  </li>
+
+      
+      
+        <li class="menu-item menu-item-search">
+          
+            <a href="javascript:;" class="popup-trigger">
+          
+            
+              <i class="menu-item-icon fa fa-search fa-fw"></i> <br>搜索</a>
+        </li>
+      
+    </ul>
+  
+
+  
+
+  
+    <div class="site-search">
+      
+  <div class="popup search-popup local-search-popup">
+  <div class="local-search-header clearfix">
+    <span class="search-icon">
+      <i class="fa fa-search"></i>
+    </span>
+    <span class="popup-btn-close">
+      <i class="fa fa-times-circle"></i>
+    </span>
+    <div class="local-search-input-wrapper">
+      <input autocomplete="off" placeholder="搜索..." spellcheck="false" type="text" id="local-search-input">
+    </div>
+  </div>
+  <div id="local-search-result"></div>
+</div>
+
+
+
+    </div>
+  
+</nav>
+
+
+
+  
+
+
+
+</div>
+    </header>
+
+    
+
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+            
+
+          
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://tongfan.xyz/2019/02/17/HBASE中的数据刷写/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="XiaoTong Wang">
+      <meta itemprop="description" content="You Never Know Who You Are">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="XTong notes">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h2 class="post-title" itemprop="name headline">HBASE中的数据刷写
+
+              
+            
+          </h2>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+
+            
+            
+            
+
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+
+              
+                
+              
+
+              <time title="创建时间：2019-02-17 19:27:58" itemprop="dateCreated datePublished" datetime="2019-02-17T19:27:58+08:00">2019-02-17</time>
+            
+
+            
+              
+
+              
+                
+                <span class="post-meta-divider">|</span>
+                
+
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-calendar-check-o"></i>
+                </span>
+                
+                  <span class="post-meta-item-text">更新于</span>
+                
+                <time title="修改时间：2019-02-18 20:18:01" itemprop="dateModified" datetime="2019-02-18T20:18:01+08:00">2019-02-18</time>
+              
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing"><a href="/categories/Hbase/" itemprop="url" rel="index"><span itemprop="name">Hbase</span></a></span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+            
+              
+              <span class="post-comments-count">
+                <span class="post-meta-divider">|</span>
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-comment-o"></i>
+                </span>
+            
+                <span class="post-meta-item-text">评论数：</span>
+                <a href="/2019/02/17/HBASE中的数据刷写/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count valine-comment-count" data-xid="/2019/02/17/HBASE中的数据刷写/" itemprop="commentCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p><strong>摘要</strong>：由于HBASE中使用LSM，所以在HBASE中插入数据时，是批量从内存中flush到磁盘（HDFS），本文介绍总结HBASE中触发flush动作的详细条件，从而对flush过程进行优化。（本文参考自<a href="https://mp.weixin.qq.com/s/lEfTrbd7bB4Xi0s86drr3g">HBASE社区文章</a>）</p>
+<a id="more"></a>
+<h1 id="写数据过程简介"><a href="#写数据过程简介" class="headerlink" title="写数据过程简介"></a>写数据过程简介</h1><p>HBASE数据写入都是先将数据写入内存，在内存中存在memstore的结构（在写入内存之前会先通过wal进行日志的备份，相信大家都知道这个），memstore中的数据最终会持久化到磁盘，持久化的原理就是之前文章说的LSM数据结构（内存树与磁盘树的合并），最终在磁盘上以hfile的方式进行存储，这里附HBASE的一张整体结构图，该图较为清晰的对memstore、hfile以及其他HBASE的概念的关系进行说明。</p>
+<p><img src="https://i.loli.net/2019/02/17/5c694ac4a683b.png" alt></p>
+<p>理解 MemStore 的刷写对优化 MemStore 有很重要的意义，大部分人遇到的性能问题都是写操作被阻塞(Block)无法写入HBase。本文基于 HBase 2.0.2，并对 MemStore 的 Flush 进行说明，包括哪几种条件触发 Memstore Flush 和目前常见的刷写策略(FlushPolicy)。</p>
+<h1 id="触发Flush条件"><a href="#触发Flush条件" class="headerlink" title="触发Flush条件"></a>触发Flush条件</h1><p>有很多情况会触发 MemStore 的 Flush 操作，所以我们最好需要了解每种情况在什么时候触发 Memstore Flush。总的来说，主要有以下几种情况会触发 Memstore Flush：</p>
+<ul>
+<li>Region中所有MemStore占用的内存超过阈值范围</li>
+<li>整个RegionServer的MemStore占用内存总和大于相关阈值</li>
+<li>WAL数量大于相关阈值</li>
+<li>定期自动刷写</li>
+<li>数据更新超过一定阈值</li>
+<li>手动触发刷写</li>
+</ul>
+<p>下面对如上集中情况进行详细说明。</p>
+<h2 id="Region中所有memstore占用内存超过阈值"><a href="#Region中所有memstore占用内存超过阈值" class="headerlink" title="Region中所有memstore占用内存超过阈值"></a>Region中所有memstore占用内存超过阈值</h2><p>当一个 Region 中所有 MemStore 占用的内存(包括 OnHeap + OffHeap)大小超过<strong>刷写阈值</strong>的时候会触发一次刷写，这个阈值由 <code>hbase.hregion.memstore.flush.size</code> 参数控制，默认为128MB。我们每次调用 put、delete 等操作都会检查的这个条件的。</p>
+<p>但是如果我们的数据增加得很快，达到 <code>hbase.hregion.memstore.flush.size * hbase.hregion.memstore.block.multiplier</code> 的大小，<code>hbase.hregion.memstore.block.multiplier</code> 默认值为4，也就是128*4=512MB的时候，那么除了触发 MemStore 刷写之外，HBase 还会在刷写的时候同时阻塞所有写入该 Store 的写请求（这是因为写入速率太快，如果不限制写入数据的请求，很可能导致HBASE内存空间被占满的情况）！这时候如果你往对应的 Store 写数据，会出现 <code>RegionTooBusyException</code> 异常。</p>
+<h2 id="RegionServer-的-MemStore-占用内存总和大于相关阈值"><a href="#RegionServer-的-MemStore-占用内存总和大于相关阈值" class="headerlink" title="RegionServer 的 MemStore 占用内存总和大于相关阈值"></a>RegionServer 的 MemStore 占用内存总和大于相关阈值</h2><p>HBase 为 RegionServer 的 MemStore 分配一定的写缓存，大小等于 <code>hbase_heapsize(RegionServer占用的堆内存大小)* hbase.regionserver.global.memstore.size</code>。<code>hbase.regionserver.global.memstore.size</code> 的默认值是 0.4，也就是说写缓存大概占用 RegionServer 整个 JVM 内存使用量的 40%。</p>
+<p>如果整个 RegionServer 的 MemStore 占用内存总和大于 <code>hbase.regionserver.global.memstore.size.lower.limit * hbase.regionserver.global.memstore.size * hbase_heapsize</code> 的时候，将会触发 MemStore 的刷写。其中 <code>hbase.regionserver.global.memstore.size.lower.limit</code> 的默认值为 0.95。</p>
+<p>举个例子，如果我们 HBase 堆内存总共是 32G，按照默认的比例，那么触发 RegionServer 级别的 Flush 是 RegionServer 中所有的 MemStore 占用内存为：32 <em> 0.4 </em> 0.95 = 12.16G。</p>
+<p><strong>注意</strong>：0.99.0 之前 <code>hbase.regionserver.global.memstore.size</code> 是 <code>hbase.regionserver.global.memstore.upperLimit</code> 参数；<code>hbase.regionserver.global.memstore.size.lower.limit</code> 是 <code>hbase.regionserver.global.memstore.lowerLimit</code>，参见 HBASE-5349</p>
+<p>RegionServer 级别的 Flush 策略是每次找到 RS 中占用内存最大的 Region 对它进行刷写，这个操作是循环进行的，直到总体内存的占用低于全局 MemStore 刷写下<br>限(<code>hbase.regionserver.global.memstore.size.lower.limit * hbase.regionserver.global.memstore.size * hbase_heapsize</code>)才会停止。</p>
+<p>需要<strong>注意</strong>的是，如果达到了 RegionServer 级别的 Flush，那么当前 RegionServer 的所有写操作将会被阻塞，而且这个阻塞可能会持续到分钟级别。（敏感的人已经发现在这应该尽量避免RegionServer级别的flush）</p>
+<h2 id="WAL数量大于相关阈值"><a href="#WAL数量大于相关阈值" class="headerlink" title="WAL数量大于相关阈值"></a>WAL数量大于相关阈值</h2><p>WAL(write-ahead log，预写日志)用来解决宕机之后的操作恢复问题的。数据到达 Region 的时候是先写入 WAL，然后再被写到 Memstore 的。如果 WAL 的数量越来越大，这就意味着 MemStore 中未持久化到磁盘的数据越来越多。当 RS 挂掉的时候，恢复时间将会变长，所以有必要在 WAL 到达一定的数量时进行一次刷写操作。阈值 maxLogs 的计算公式如下：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// Schedule a WAL roll when the WAL is 50% of the HDFS block size. Scheduling at 50% of block</span></span><br><span class="line"><span class="comment">// size should make it so WAL rolls before we get to the end-of-block (Block transitions cost</span></span><br><span class="line"><span class="comment">// some latency). In hbase-1 we did this differently. We scheduled a roll when we hit 95% of</span></span><br><span class="line"><span class="comment">// the block size but experience from the field has it that this was not enough time for the</span></span><br><span class="line"><span class="comment">// roll to happen before end-of-block. So the new accounting makes WALs of about the same</span></span><br><span class="line"><span class="comment">// size as those made in hbase-1 (to prevent surprise), we now have default block size as</span></span><br><span class="line"><span class="comment">// 2 times the DFS default: i.e. 2 * DFS default block size rolling at 50% full will generally</span></span><br><span class="line"><span class="comment">// make similar size logs to 1 * DFS default block size rolling at 95% full. See HBASE-19148.</span></span><br><span class="line"><span class="keyword">this</span>.blocksize = WALUtil.getWALBlockSize(<span class="keyword">this</span>.conf, <span class="keyword">this</span>.fs, <span class="keyword">this</span>.walDir);</span><br><span class="line"><span class="keyword">float</span> multiplier = conf.getFloat(<span class="string">"hbase.regionserver.logroll.multiplier"</span>, <span class="number">0.5f</span>);</span><br><span class="line"><span class="keyword">this</span>.logrollsize = (<span class="keyword">long</span>)(<span class="keyword">this</span>.blocksize * multiplier);</span><br><span class="line"><span class="keyword">this</span>.maxLogs = conf.getInt(<span class="string">"hbase.regionserver.maxlogs"</span>,</span><br><span class="line">      Math.max(<span class="number">32</span>, calculateMaxLogFiles(conf, logrollsize)));</span><br><span class="line"></span><br><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment">  * Public because of FSHLog. Should be package-private</span></span><br><span class="line"><span class="comment">  * <span class="doctag">@param</span> isRecoverEdits the created writer is for recovered edits or WAL.</span></span><br><span class="line"><span class="comment">  *                       For recovered edits, it is true and for WAL it is false.</span></span><br><span class="line"><span class="comment">  */</span></span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">long</span> <span class="title">getWALBlockSize</span><span class="params">(Configuration conf, FileSystem fs, Path dir,</span></span></span><br><span class="line"><span class="function"><span class="params">     <span class="keyword">boolean</span> isRecoverEdits)</span> <span class="keyword">throws</span> IOException </span>&#123;</span><br><span class="line">  <span class="keyword">long</span> defaultBlockSize = CommonFSUtils.getDefaultBlockSize(fs, dir) * <span class="number">2</span>;</span><br><span class="line">  <span class="keyword">if</span> (isRecoverEdits) &#123;</span><br><span class="line">     <span class="keyword">return</span> conf.getLong(<span class="string">"hbase.regionserver.recoverededits.blocksize"</span>, defaultBlockSize);</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="keyword">return</span> conf.getLong(<span class="string">"hbase.regionserver.hlog.blocksize"</span>, defaultBlockSize);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">private</span> <span class="keyword">int</span> <span class="title">calculateMaxLogFiles</span><span class="params">(Configuration conf, <span class="keyword">long</span> logRollSize)</span> </span>&#123;</span><br><span class="line">  Pair&lt;Long, MemoryType&gt; globalMemstoreSize = MemorySizeUtil.getGlobalMemStoreSize(conf);</span><br><span class="line">  <span class="keyword">return</span> (<span class="keyword">int</span>) ((globalMemstoreSize.getFirst() * <span class="number">2</span>) / logRollSize);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>也就是说，如果设置 <code>hbase.regionserver.maxlogs</code>，那就是这个参数的值；否则是 <code>max(32, hbase_heapsize * hbase.regionserver.global.memstore.size * 2 / logRollSize)</code>。如果某个 RegionServer 的 WAL 数量大于 maxLogs 就会触发 MemStore 的刷写。</p>
+<p>WAL 数量触发的刷写策略是，找到最旧的 un-archived WAL 文件，并找到这个 WAL 文件对应的 Regions， 然后对这些 Regions 进行刷写。</p>
+<h2 id="定期自动刷写"><a href="#定期自动刷写" class="headerlink" title="定期自动刷写"></a>定期自动刷写</h2><p>如果我们很久没有对 HBase 的数据进行更新，这时候就可以依赖定期刷写策略了。RegionServer 在启动的时候会启动一个线程 PeriodicMemStoreFlusher 每隔 <code>hbase.server.thread.wakefrequency</code> 时间检查属于这个 RegionServer 的 Region 有没有超过一定时间都没有刷写，这个时间是由 <code>hbase.regionserver.optionalcacheflushinterval</code> 参数控制的，默认是 3600000，单位ms，也就是1小时会进行一次刷写。如果设定为0，则意味着关闭定时自动刷写。</p>
+<p>为了防止一次性有过多的 MemStore 刷写，定期自动刷写会有 0 ~ 5 分钟的延迟，具体参见 PeriodicMemStoreFlusher 类的实现。</p>
+<h2 id="数据更新超过一定阈值"><a href="#数据更新超过一定阈值" class="headerlink" title="数据更新超过一定阈值"></a>数据更新超过一定阈值</h2><p>如果 HBase 的某个 Region 更新的很频繁，而且既没有达到自动刷写阀值，也没有达到内存的使用限制，但是内存中的更新数量已经足够多，比如超过 <code>hbase.regionserver.flush.per.changes</code> 参数配置，默认为30000000，那么也是会触发刷写的。</p>
+<h2 id="手动触发刷写"><a href="#手动触发刷写" class="headerlink" title="手动触发刷写"></a>手动触发刷写</h2><p>除了 HBase 内部一些条件触发的刷写之外，我们还可以通过执行相关命令或 API 来触发 MemStore 的刷写操作。比如调用可以调用 Admin 接口提供的方法：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line">/**</span><br><span class="line">  * Flush a table. Synchronous operation.</span><br><span class="line">  *</span><br><span class="line">  * @param tableName table to flush</span><br><span class="line">  * @throws IOException if a remote or network exception occurs</span><br><span class="line">  */</span><br><span class="line">void flush(TableName tableName) throws IOException;</span><br><span class="line"></span><br><span class="line">/**</span><br><span class="line">  * Flush an individual region. Synchronous operation.</span><br><span class="line">  *</span><br><span class="line">  * @param regionName region to flush</span><br><span class="line">  * @throws IOException if a remote or network exception occurs</span><br><span class="line">  */</span><br><span class="line">void flushRegion(byte[] regionName) throws IOException;</span><br><span class="line"></span><br><span class="line">/**</span><br><span class="line">  * Flush all regions on the region server. Synchronous operation.</span><br><span class="line">  * @param serverName the region server name to flush</span><br><span class="line">  * @throws IOException if a remote or network exception occurs</span><br><span class="line">  */</span><br><span class="line">void flushRegionServer(ServerName serverName) throws IOException;</span><br></pre></td></tr></table></figure>
+<p>分别对某张表、某个 Region 或者某个 RegionServer 进行刷写操作。也可以在 Shell 中通过执行 flush 命令：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">hbase&gt; flush &apos;TABLENAME&apos;</span><br><span class="line">hbase&gt; flush &apos;REGIONNAME&apos;</span><br><span class="line">hbase&gt; flush &apos;ENCODED_REGIONNAME&apos;</span><br><span class="line">hbase&gt; flush &apos;REGION_SERVER_NAME&apos;</span><br></pre></td></tr></table></figure>
+<p>需要注意的是，以上所有条件触发的刷写操作最后都会检查对应的 HStore 包含的 StoreFiles 文件超过 <code>hbase.hstore.blockingStoreFiles</code> 参数配置的个数，默认值是16。如果满足这个条件，那么当前刷写会被推迟到 <code>hbase.hstore.blockingWaitTime</code> 参数设置的时间后再刷写。在阻塞刷写的同时，HBase 还会请求 Split 或 Compaction 操作。（在flush之前，先对region进行分离或者合并操作）</p>
+<h1 id="哪些操作触发-MemStore-Flush"><a href="#哪些操作触发-MemStore-Flush" class="headerlink" title="哪些操作触发 MemStore Flush"></a>哪些操作触发 <strong>MemStore Flush</strong></h1><p>我们常见的 put、delete、append、increment、调用 flush 命令、Region 分裂、Region Merge、bulkLoad HFiles 以及给表做快照操作都会对上面的相关条件做检查，以便判断要不要做刷写操作。</p>
+<h1 id="MemStore-Flush策略-FlushPolicy"><a href="#MemStore-Flush策略-FlushPolicy" class="headerlink" title="MemStore Flush策略(FlushPolicy)"></a>MemStore Flush策略(FlushPolicy)</h1><p>在 HBase 1.1 之前，MemStore 刷写是 Region 级别的。就是说，如果要刷写某个 MemStore ，MemStore 所在的 Region 中其他 MemStore 也是会被一起刷写的！这会造成一定的问题，比如小文件问题，具体参见 <a href="https://mp.weixin.qq.com/s?__biz=MzA5MTc0NTMwNQ==&amp;mid=2650716323&amp;idx=1&amp;sn=ccace248f650d4a3bcc2ff60103fc4a1&amp;scene=21#wechat_redirect">《为什么不建议在 HBase 中使用过多的列族》</a>。针对这个问题，HBASE-10201/HBASE-3149引入列族级别的刷写。我们可以通过 <code>hbase.regionserver.flush.policy</code> 参数选择不同的刷写策略。</p>
+<p>目前 HBase 2.0.2 的刷写策略全部都是实现 FlushPolicy 抽象类的。并且自带三种刷写策略：<code>FlushAllLargeStoresPolicy</code>、<code>FlushNonSloppyStoresFirstPolicy</code> 以及 <code>FlushAllStoresPolicy</code>。</p>
+<h2 id="FlushAllStoresPolicy"><a href="#FlushAllStoresPolicy" class="headerlink" title="FlushAllStoresPolicy"></a><strong>FlushAllStoresPolicy</strong></h2><p>这种刷写策略实现最简单，直接返回当前 Region 对应的所有 MemStore。也就是每次刷写都是对 Region 里面所有的 MemStore 进行的，这个行为和 HBase 1.1 之前是一样的。</p>
+<h2 id="FlushAllLargeStoresPolicy"><a href="#FlushAllLargeStoresPolicy" class="headerlink" title="FlushAllLargeStoresPolicy"></a><strong>FlushAllLargeStoresPolicy</strong></h2><p>在 HBase 2.0 之前版本是 FlushLargeStoresPolicy，后面被拆分成分 FlushAllLargeStoresPolicy 和FlushNonSloppyStoresFirstPolicy，参见 HBASE-14920。</p>
+<p>这种策略会先判断 Region 中每个 MemStore 的使用内存(OnHeap+OffHeap)是否大于某个阀值，大于这个阀值的 MemStore 将会被刷写。阀值的计算是由 <code>hbase.hregion.percolumnfamilyflush.size.lower.bound</code> 、<code>hbase.hregion.percolumnfamilyflush.size.lower.bound.min</code> 以及 <code>hbase.hregion.memstore.flush.size</code> 参数决定的。计算逻辑如下：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//region.getMemStoreFlushSize() / familyNumber</span></span><br><span class="line"><span class="comment">//就是 hbase.hregion.memstore.flush.size 参数的值除以相关表列族的个数</span></span><br><span class="line">flushSizeLowerBound = max(region.getMemStoreFlushSize() / familyNumber, hbase.hregion.percolumnfamilyflush.size.lower.bound.min)</span><br><span class="line"></span><br><span class="line"><span class="comment">//如果设置了 hbase.hregion.percolumnfamilyflush.size.lower.bound</span></span><br><span class="line">flushSizeLowerBound = hbase.hregion.percolumnfamilyflush.size.lower.bound</span><br></pre></td></tr></table></figure>
+<p><code>hbase.hregion.percolumnfamilyflush.size.lower.bound.min</code> 默认值为 16MB，而 <code>hbase.hregion.percolumnfamilyflush.size.lower.bound</code> 没有设置。</p>
+<p>比如当前表有3个列族，其他用默认的值，那么 flushSizeLowerBound = max((long)128 / 3, 16) = 42。</p>
+<p><strong>如果当前 Region 中没有 MemStore 的使用内存大于上面的阀值，FlushAllLargeStoresPolicy 策略就退化成 FlushAllStoresPolicy 策略了，也就是会对 Region 里面所有的 MemStore 进行 Flush。</strong></p>
+<h2 id="FlushNonSloppyStoresFirstPolicy"><a href="#FlushNonSloppyStoresFirstPolicy" class="headerlink" title="FlushNonSloppyStoresFirstPolicy"></a><strong>FlushNonSloppyStoresFirstPolicy</strong></h2><p>HBase 2.0 引入了 in-memory compaction，参见 HBASE-13408。如果我们对相关列族 <code>hbase.hregion.compacting.memstore.type</code> 参数的值不是 NONE，那么这个 MemStore 的 isSloppyMemStore 值就是 true，否则就是 false。</p>
+<p>FlushNonSloppyStoresFirstPolicy 策略将 Region 中的 MemStore 按照 isSloppyMemStore 分到两个 HashSet 里面（sloppyStores 和 regularStores）。然后</p>
+<ul>
+<li>判断 regularStores 里面是否有 MemStore 内存占用大于相关阀值的 MemStore ，有的话就会对这些 MemStore 进行刷写，其他的不做处理，这个阀值计算和 FlushAllLargeStoresPolicy 的阀值计算逻辑一致。</li>
+<li>如果 regularStores 里面没有 MemStore 内存占用大于相关阀值的 MemStore，这时候就开始在 sloppyStores 里面寻找是否有 MemStore 内存占用大于相关阀值的 MemStore，有的话就会对这些 MemStore 进行刷写，其他的不做处理。</li>
+<li>如果上面 sloppyStores 和 regularStores 都没有满足条件的 MemStore 需要刷写，这时候就 FlushNonSloppyStoresFirstPolicy 策略久退化成 FlushAllStoresPolicy 策略了。</li>
+</ul>
+<h1 id="MemStore-Flush-刷写过程"><a href="#MemStore-Flush-刷写过程" class="headerlink" title="MemStore Flush 刷写过程"></a><strong>MemStore Flush</strong> <strong>刷写过程</strong></h1><p>MemStore 的刷写过程很复杂，很多操作都可能触发，但是这些条件触发的刷写最终都是调用 HRegion 类中的 internalFlushcache 方法。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br></pre></td><td class="code"><pre><span class="line">/**</span><br><span class="line">  * Flush the memstore. Flushing the memstore is a little tricky. We have a lot of updates in the</span><br><span class="line">  * memstore, all of which have also been written to the wal. We need to write those updates in the</span><br><span class="line">  * memstore out to disk, while being able to process reads/writes as much as possible during the</span><br><span class="line">  * flush operation.</span><br><span class="line">  * &lt;p&gt;</span><br><span class="line">  * This method may block for some time. Every time you call it, we up the regions sequence id even</span><br><span class="line">  * if we don&apos;t flush; i.e. the returned region id will be at least one larger than the last edit</span><br><span class="line">  * applied to this region. The returned id does not refer to an actual edit. The returned id can</span><br><span class="line">  * be used for say installing a bulk loaded file just ahead of the last hfile that was the result</span><br><span class="line">  * of this flush, etc.</span><br><span class="line">  * @param wal Null if we&apos;re NOT to go via wal.</span><br><span class="line">  * @param myseqid The seqid to use if &lt;code&gt;wal&lt;/code&gt; is null writing out flush file.</span><br><span class="line">  * @param storesToFlush The list of stores to flush.</span><br><span class="line">  * @return object describing the flush&apos;s state</span><br><span class="line">  * @throws IOException general io exceptions</span><br><span class="line">  * @throws DroppedSnapshotException Thrown when replay of WAL is required.</span><br><span class="line">  */</span><br><span class="line">protected FlushResultImpl internalFlushcache(WAL wal, long myseqid,</span><br><span class="line">     Collection&lt;HStore&gt; storesToFlush, MonitoredTask status, boolean writeFlushWalMarker,</span><br><span class="line">     FlushLifeCycleTracker tracker) throws IOException &#123;</span><br><span class="line">   PrepareFlushResult result =</span><br><span class="line">       internalPrepareFlushCache(wal, myseqid, storesToFlush, status, writeFlushWalMarker, tracker);</span><br><span class="line">   if (result.result == null) &#123;</span><br><span class="line">     return internalFlushCacheAndCommit(wal, status, result, storesToFlush);</span><br><span class="line">   &#125; else &#123;</span><br><span class="line">     return result.result; // early exit due to failure from prepare stage</span><br><span class="line">   &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>从上面的实现可以看出，Flush 操作主要分以下几步做的</p>
+<ul>
+<li><strong>prepareFlush</strong> 阶段：刷写的第一步是对 MemStore 做 snapshot，为了防止刷写过程中更新的数据同时在 snapshot 和 MemStore 中而造成后续处理的困难，所以在刷写期间需要持有 updateLock 。持有了 updateLock 之后，这将阻塞客户端的写操作。所以只在创建 snapshot 期间持有 updateLock，而且 snapshot 的创建非常快，所以此锁期间对客户的影响一般非常小。对 MemStore 做 snapshot 是 internalPrepareFlushCache 里面进行的。</li>
+<li><strong>flushCache</strong> 阶段：如果创建快照没问题，那么返回的 result.result 将为 null。这时候我们就可以进行下一步 internalFlushCacheAndCommit。其实 internalFlushCacheAndCommit 里面包含两个步骤：flushCache 和 commit 阶段。flushCache 阶段其实就是将 prepareFlush 阶段创建好的快照写到临时文件里面，临时文件是存放在对应 Region 文件夹下面的 .tmp 目录里面。</li>
+<li><strong>commit</strong> 阶段：将 flushCache 阶段生产的临时文件移到(rename)对应的列族目录下面，并做一些清理工作，比如删除第一步生成的 snapshot。</li>
+</ul>
+<h1 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h1><p>HBASE的使用并不是很复杂，甚至很多人认为有点简单，但是涉及到大数据量时，往往会出现很多“意想不到”的问题，这种情况下深入到数据库的实现细节，根据其原理去定向的优化数据库就很是重要的，说到底还是要在源码级别对一个东西有系统性的认识。</p>
+<div class="note primary">
+            <h4 id="本文作者：tongtong"><a href="#本文作者：tongtong" class="headerlink" title="本文作者：tongtong"></a>本文作者：tongtong</h4><h4 id="本文链接：https-stongtong-github-io"><a href="#本文链接：https-stongtong-github-io" class="headerlink" title="本文链接：https://stongtong.github.io/"></a>本文链接：<a href="https://stongtong.github.io/">https://stongtong.github.io/</a></h4><h4 id="版权申明：网站内容为tongtong所有，转载请注明出处。"><a href="#版权申明：网站内容为tongtong所有，转载请注明出处。" class="headerlink" title="版权申明：网站内容为tongtong所有，转载请注明出处。"></a>版权申明：网站内容为tongtong所有，转载请注明出处。</h4>
+          </div>
+
+      
+    </div>
+
+    
+
+    
+    
+    
+
+    
+
+    
+      
+    
+    
+
+    
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/Hbase/" rel="tag"># Hbase</a>
+          
+            <a href="/tags/flush/" rel="tag"># flush</a>
+          
+        </div>
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2018/01/13/markdown中的绘图语法-md/" rel="next" title="markdown中的绘图语法">
+                <i class="fa fa-chevron-left"></i> markdown中的绘图语法
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+  </div>
+
+
+          </div>
+          
+
+  
+    <div class="comments" id="comments">
+    </div>
+
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+            
+              <img class="site-author-image" itemprop="image" src="/images/avatar.gif" alt="XiaoTong Wang">
+            
+              <p class="site-author-name" itemprop="name">XiaoTong Wang</p>
+              <p class="site-description motion-element" itemprop="description">You Never Know Who You Are</p>
+          </div>
+
+          
+            <nav class="site-state motion-element">
+              
+                <div class="site-state-item site-state-posts">
+                
+                  <a href="/archives/">
+                
+                    <span class="site-state-item-count">6</span>
+                    <span class="site-state-item-name">日志</span>
+                  </a>
+                </div>
+              
+
+              
+                
+                
+                <div class="site-state-item site-state-categories">
+                  <a href="/categories/index.html">
+                    
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                    <span class="site-state-item-count">4</span>
+                    <span class="site-state-item-name">分类</span>
+                  </a>
+                </div>
+              
+
+              
+                
+                
+                <div class="site-state-item site-state-tags">
+                  <a href="/tags/index.html">
+                    
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                    <span class="site-state-item-count">8</span>
+                    <span class="site-state-item-name">标签</span>
+                  </a>
+                </div>
+              
+            </nav>
+          
+
+          
+            <div class="feed-link motion-element">
+              <a href="/atom.xml" rel="alternate">
+                <i class="fa fa-rss"></i>
+                RSS
+              </a>
+            </div>
+          
+
+          
+            <div class="links-of-author motion-element">
+              
+                <span class="links-of-author-item">
+                  
+                  
+                    
+                  
+                  
+                    
+                  
+                  <a href="https://github.com/Stongtong" title="GitHub &rarr; https://github.com/Stongtong" rel="noopener" target="_blank"><i class="fa fa-fw fa-github"></i>GitHub</a>
+                </span>
+              
+                <span class="links-of-author-item">
+                  
+                  
+                    
+                  
+                  
+                    
+                  
+                  <a href="mailto:tongxiao@outlook.com" title="E-Mail &rarr; mailto:tongxiao@outlook.com" rel="noopener" target="_blank"><i class="fa fa-fw fa-envelope"></i>E-Mail</a>
+                </span>
+              
+                <span class="links-of-author-item">
+                  
+                  
+                    
+                  
+                  
+                    
+                  
+                  <a href="https://www.zhihu.com/people/wang-xiao-tong-64-73/activities" title="Zhihu &rarr; https://www.zhihu.com/people/wang-xiao-tong-64-73/activities" rel="noopener" target="_blank"><i class="fa fa-fw fa-flag"></i>Zhihu</a>
+                </span>
+              
+                <span class="links-of-author-item">
+                  
+                  
+                    
+                  
+                  
+                    
+                  
+                  <a href="http://blog.csdn.net/wangxiaotongfan" title="CSDN &rarr; http://blog.csdn.net/wangxiaotongfan" rel="noopener" target="_blank"><i class="fa fa-fw fa-coffee"></i>CSDN</a>
+                </span>
+              
+            </div>
+          
+
+          
+
+          
+          
+
+          
+            
+          
+          
+
+        </div>
+      </div>
+
+      
+      <!--noindex-->
+        <div class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+            
+            
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#写数据过程简介"><span class="nav-number">1.</span> <span class="nav-text">写数据过程简介</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#触发Flush条件"><span class="nav-number">2.</span> <span class="nav-text">触发Flush条件</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#Region中所有memstore占用内存超过阈值"><span class="nav-number">2.1.</span> <span class="nav-text">Region中所有memstore占用内存超过阈值</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#RegionServer-的-MemStore-占用内存总和大于相关阈值"><span class="nav-number">2.2.</span> <span class="nav-text">RegionServer 的 MemStore 占用内存总和大于相关阈值</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#WAL数量大于相关阈值"><span class="nav-number">2.3.</span> <span class="nav-text">WAL数量大于相关阈值</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#定期自动刷写"><span class="nav-number">2.4.</span> <span class="nav-text">定期自动刷写</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#数据更新超过一定阈值"><span class="nav-number">2.5.</span> <span class="nav-text">数据更新超过一定阈值</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#手动触发刷写"><span class="nav-number">2.6.</span> <span class="nav-text">手动触发刷写</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#哪些操作触发-MemStore-Flush"><span class="nav-number">3.</span> <span class="nav-text">哪些操作触发 MemStore Flush</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#MemStore-Flush策略-FlushPolicy"><span class="nav-number">4.</span> <span class="nav-text">MemStore Flush策略(FlushPolicy)</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#FlushAllStoresPolicy"><span class="nav-number">4.1.</span> <span class="nav-text">FlushAllStoresPolicy</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#FlushAllLargeStoresPolicy"><span class="nav-number">4.2.</span> <span class="nav-text">FlushAllLargeStoresPolicy</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#FlushNonSloppyStoresFirstPolicy"><span class="nav-number">4.3.</span> <span class="nav-text">FlushNonSloppyStoresFirstPolicy</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#MemStore-Flush-刷写过程"><span class="nav-number">5.</span> <span class="nav-text">MemStore Flush 刷写过程</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#总结"><span class="nav-number">6.</span> <span class="nav-text">总结</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#本文作者：tongtong"><span class="nav-number">6.0.0.1.</span> <span class="nav-text">本文作者：tongtong</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#本文链接：https-stongtong-github-io"><span class="nav-number">6.0.0.2.</span> <span class="nav-text">本文链接：https://stongtong.github.io/</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#版权申明：网站内容为tongtong所有，转载请注明出处。"><span class="nav-number">6.0.0.3.</span> <span class="nav-text">版权申明：网站内容为tongtong所有，转载请注明出处。</span></a></li></ol></li></ol></div>
+            
+
+          </div>
+        </div>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; <span itemprop="copyrightYear">2019</span>
+  <span class="with-love" id="animate">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">XiaoTong Wang</span>
+
+  
+
+  
+</div>
+
+
+
+
+
+
+
+
+
+
+  <script src="https://unpkg.com/mermaid@7.1.2/dist/mermaid.min.js"></script>
+  <script>
+    if (window.mermaid) {
+      mermaid.initialize({theme: 'forest'});
+    }
+  </script>
+
+
+        
+
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+    
+
+    
+
+    
+  </div>
+
+  
+
+<script>
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+    
+    
+  
+  <script color="0,0,255" opacity="0.5" zindex="-1" count="99" src="/lib/canvas-nest/canvas-nest.min.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  <script src="/lib/jquery/index.js?v=2.1.3"></script>
+
+  
+  <script src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+
+  
+  <script src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+
+  
+
+
+  <script src="/js/src/utils.js?v=7.0.0"></script>
+
+  <script src="/js/src/motion.js?v=7.0.0"></script>
+
+
+
+  
+  
+
+
+  <script src="/js/src/affix.js?v=7.0.0"></script>
+
+  <script src="/js/src/schemes/pisces.js?v=7.0.0"></script>
+
+
+
+
+  
+  <script src="/js/src/scrollspy.js?v=7.0.0"></script>
+<script src="/js/src/post-details.js?v=7.0.0"></script>
+
+
+
+  
+
+
+  <script src="/js/src/bootstrap.js?v=7.0.0"></script>
+
+
+
+  
+  
+
+<script src="//cdn1.lncld.net/static/js/3.11.1/av-min.js"></script>
+
+
+
+<script src="//unpkg.com/valine/dist/Valine.min.js"></script>
+
+<script>
+  var GUEST = ['nick', 'mail', 'link'];
+  var guest = 'nick,mail';
+  guest = guest.split(',').filter(function(item) {
+    return GUEST.indexOf(item) > -1;
+  });
+  new Valine({
+    el: '#comments',
+    verify: true,
+    notify: true,
+    appId: 'C5p2It82joj83Mzm0milY5BK-gzGzoHsz',
+    appKey: 'iDq8etLnrVzoVdfbWoOOow4L',
+    placeholder: 'Tell me your story...',
+    avatar: 'mm',
+    meta: guest,
+    pageSize: '10' || 10,
+    visitor: false
+  });
+</script>
+
+
+
+
+  
+
+
+  
+  <script>
+    // Popup Window;
+    var isfetched = false;
+    var isXml = true;
+    // Search DB path;
+    var search_path = "search.xml";
+    if (search_path.length === 0) {
+      search_path = "search.xml";
+    } else if (/json$/i.test(search_path)) {
+      isXml = false;
+    }
+    var path = "/" + search_path;
+    // monitor main search box;
+
+    var onPopupClose = function (e) {
+      $('.popup').hide();
+      $('#local-search-input').val('');
+      $('.search-result-list').remove();
+      $('#no-result').remove();
+      $(".local-search-pop-overlay").remove();
+      $('body').css('overflow', '');
+    }
+
+    function proceedsearch() {
+      $("body")
+        .append('<div class="search-popup-overlay local-search-pop-overlay"></div>')
+        .css('overflow', 'hidden');
+      $('.search-popup-overlay').click(onPopupClose);
+      $('.popup').toggle();
+      var $localSearchInput = $('#local-search-input');
+      $localSearchInput.attr("autocapitalize", "none");
+      $localSearchInput.attr("autocorrect", "off");
+      $localSearchInput.focus();
+    }
+
+    // search function;
+    var searchFunc = function(path, search_id, content_id) {
+      'use strict';
+
+      // start loading animation
+      $("body")
+        .append('<div class="search-popup-overlay local-search-pop-overlay">' +
+          '<div id="search-loading-icon">' +
+          '<i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>' +
+          '</div>' +
+          '</div>')
+        .css('overflow', 'hidden');
+      $("#search-loading-icon").css('margin', '20% auto 0 auto').css('text-align', 'center');
+
+      
+        // ref: https://github.com/ForbesLindesay/unescape-html
+        var unescapeHtml = function(html) {
+          return String(html)
+            .replace(/&quot;/g, '"')
+            .replace(/&#39;/g, '\'')
+            .replace(/&#x3A;/g, ':')
+            // replace all the other &#x; chars
+            .replace(/&#(\d+);/g, function (m, p) { return String.fromCharCode(p); })
+            .replace(/&lt;/g, '<')
+            .replace(/&gt;/g, '>')
+            .replace(/&amp;/g, '&');
+        };
+      
+
+      $.ajax({
+        url: path,
+        dataType: isXml ? "xml" : "json",
+        async: true,
+        success: function(res) {
+          // get the contents from search data
+          isfetched = true;
+          $('.popup').detach().appendTo('.header-inner');
+          var datas = isXml ? $("entry", res).map(function() {
+            return {
+              title: $("title", this).text(),
+              content: $("content",this).text(),
+              url: $("url" , this).text()
+            };
+          }).get() : res;
+          var input = document.getElementById(search_id);
+          var resultContent = document.getElementById(content_id);
+          var inputEventFunction = function() {
+            var searchText = input.value.trim().toLowerCase();
+            var keywords = searchText.split(/[\s\-]+/);
+            if (keywords.length > 1) {
+              keywords.push(searchText);
+            }
+            var resultItems = [];
+            if (searchText.length > 0) {
+              // perform local searching
+              datas.forEach(function(data) {
+                var isMatch = false;
+                var hitCount = 0;
+                var searchTextCount = 0;
+                var title = data.title.trim();
+                var titleInLowerCase = title.toLowerCase();
+                var content = data.content.trim().replace(/<[^>]+>/g,"");
+                
+                content = unescapeHtml(content);
+                
+                var contentInLowerCase = content.toLowerCase();
+                var articleUrl = decodeURIComponent(data.url).replace(/\/{2,}/g, '/');
+                var indexOfTitle = [];
+                var indexOfContent = [];
+                // only match articles with not empty titles
+                if(title != '') {
+                  keywords.forEach(function(keyword) {
+                    function getIndexByWord(word, text, caseSensitive) {
+                      var wordLen = word.length;
+                      if (wordLen === 0) {
+                        return [];
+                      }
+                      var startPosition = 0, position = [], index = [];
+                      if (!caseSensitive) {
+                        text = text.toLowerCase();
+                        word = word.toLowerCase();
+                      }
+                      while ((position = text.indexOf(word, startPosition)) > -1) {
+                        index.push({position: position, word: word});
+                        startPosition = position + wordLen;
+                      }
+                      return index;
+                    }
+
+                    indexOfTitle = indexOfTitle.concat(getIndexByWord(keyword, titleInLowerCase, false));
+                    indexOfContent = indexOfContent.concat(getIndexByWord(keyword, contentInLowerCase, false));
+                  });
+                  if (indexOfTitle.length > 0 || indexOfContent.length > 0) {
+                    isMatch = true;
+                    hitCount = indexOfTitle.length + indexOfContent.length;
+                  }
+                }
+
+                // show search results
+
+                if (isMatch) {
+                  // sort index by position of keyword
+
+                  [indexOfTitle, indexOfContent].forEach(function (index) {
+                    index.sort(function (itemLeft, itemRight) {
+                      if (itemRight.position !== itemLeft.position) {
+                        return itemRight.position - itemLeft.position;
+                      } else {
+                        return itemLeft.word.length - itemRight.word.length;
+                      }
+                    });
+                  });
+
+                  // merge hits into slices
+
+                  function mergeIntoSlice(text, start, end, index) {
+                    var item = index[index.length - 1];
+                    var position = item.position;
+                    var word = item.word;
+                    var hits = [];
+                    var searchTextCountInSlice = 0;
+                    while (position + word.length <= end && index.length != 0) {
+                      if (word === searchText) {
+                        searchTextCountInSlice++;
+                      }
+                      hits.push({position: position, length: word.length});
+                      var wordEnd = position + word.length;
+
+                      // move to next position of hit
+
+                      index.pop();
+                      while (index.length != 0) {
+                        item = index[index.length - 1];
+                        position = item.position;
+                        word = item.word;
+                        if (wordEnd > position) {
+                          index.pop();
+                        } else {
+                          break;
+                        }
+                      }
+                    }
+                    searchTextCount += searchTextCountInSlice;
+                    return {
+                      hits: hits,
+                      start: start,
+                      end: end,
+                      searchTextCount: searchTextCountInSlice
+                    };
+                  }
+
+                  var slicesOfTitle = [];
+                  if (indexOfTitle.length != 0) {
+                    slicesOfTitle.push(mergeIntoSlice(title, 0, title.length, indexOfTitle));
+                  }
+
+                  var slicesOfContent = [];
+                  while (indexOfContent.length != 0) {
+                    var item = indexOfContent[indexOfContent.length - 1];
+                    var position = item.position;
+                    var word = item.word;
+                    // cut out 100 characters
+                    var start = position - 20;
+                    var end = position + 80;
+                    if(start < 0){
+                      start = 0;
+                    }
+                    if (end < position + word.length) {
+                      end = position + word.length;
+                    }
+                    if(end > content.length){
+                      end = content.length;
+                    }
+                    slicesOfContent.push(mergeIntoSlice(content, start, end, indexOfContent));
+                  }
+
+                  // sort slices in content by search text's count and hits' count
+
+                  slicesOfContent.sort(function (sliceLeft, sliceRight) {
+                    if (sliceLeft.searchTextCount !== sliceRight.searchTextCount) {
+                      return sliceRight.searchTextCount - sliceLeft.searchTextCount;
+                    } else if (sliceLeft.hits.length !== sliceRight.hits.length) {
+                      return sliceRight.hits.length - sliceLeft.hits.length;
+                    } else {
+                      return sliceLeft.start - sliceRight.start;
+                    }
+                  });
+
+                  // select top N slices in content
+
+                  var upperBound = parseInt('1');
+                  if (upperBound >= 0) {
+                    slicesOfContent = slicesOfContent.slice(0, upperBound);
+                  }
+
+                  // highlight title and content
+
+                  function highlightKeyword(text, slice) {
+                    var result = '';
+                    var prevEnd = slice.start;
+                    slice.hits.forEach(function (hit) {
+                      result += text.substring(prevEnd, hit.position);
+                      var end = hit.position + hit.length;
+                      result += '<b class="search-keyword">' + text.substring(hit.position, end) + '</b>';
+                      prevEnd = end;
+                    });
+                    result += text.substring(prevEnd, slice.end);
+                    return result;
+                  }
+
+                  var resultItem = '';
+
+                  if (slicesOfTitle.length != 0) {
+                    resultItem += "<li><a href='" + articleUrl + "' class='search-result-title'>" + highlightKeyword(title, slicesOfTitle[0]) + "</a>";
+                  } else {
+                    resultItem += "<li><a href='" + articleUrl + "' class='search-result-title'>" + title + "</a>";
+                  }
+
+                  slicesOfContent.forEach(function (slice) {
+                    resultItem += "<a href='" + articleUrl + "'>" +
+                      "<p class=\"search-result\">" + highlightKeyword(content, slice) +
+                      "...</p>" + "</a>";
+                  });
+
+                  resultItem += "</li>";
+                  resultItems.push({
+                    item: resultItem,
+                    searchTextCount: searchTextCount,
+                    hitCount: hitCount,
+                    id: resultItems.length
+                  });
+                }
+              })
+            };
+            if (keywords.length === 1 && keywords[0] === "") {
+              resultContent.innerHTML = '<div id="no-result"><i class="fa fa-search fa-5x"></i></div>'
+            } else if (resultItems.length === 0) {
+              resultContent.innerHTML = '<div id="no-result"><i class="fa fa-frown-o fa-5x"></i></div>'
+            } else {
+              resultItems.sort(function (resultLeft, resultRight) {
+                if (resultLeft.searchTextCount !== resultRight.searchTextCount) {
+                  return resultRight.searchTextCount - resultLeft.searchTextCount;
+                } else if (resultLeft.hitCount !== resultRight.hitCount) {
+                  return resultRight.hitCount - resultLeft.hitCount;
+                } else {
+                  return resultRight.id - resultLeft.id;
+                }
+              });
+              var searchResultList = '<ul class=\"search-result-list\">';
+              resultItems.forEach(function (result) {
+                searchResultList += result.item;
+              })
+              searchResultList += "</ul>";
+              resultContent.innerHTML = searchResultList;
+            }
+          }
+
+          if ('auto' === 'auto') {
+            input.addEventListener('input', inputEventFunction);
+          } else {
+            $('.search-icon').click(inputEventFunction);
+            input.addEventListener('keypress', function (event) {
+              if (event.keyCode === 13) {
+                inputEventFunction();
+              }
+            });
+          }
+
+          // remove loading animation
+          $(".local-search-pop-overlay").remove();
+          $('body').css('overflow', '');
+
+          proceedsearch();
+        }
+      });
+    }
+
+    // handle and trigger popup window;
+    $('.popup-trigger').click(function(e) {
+      e.stopPropagation();
+      if (isfetched === false) {
+        searchFunc(path, 'local-search-input', 'local-search-result');
+      } else {
+        proceedsearch();
+      };
+    });
+
+    $('.popup-btn-close').click(onPopupClose);
+    $('.popup').click(function(e){
+      e.stopPropagation();
+    });
+    $(document).on('keyup', function (event) {
+      var shouldDismissSearchPopup = event.which === 27 &&
+        $('.search-popup').is(':visible');
+      if (shouldDismissSearchPopup) {
+        onPopupClose();
+      }
+    });
+  </script>
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+
+  
+  <script>
+    (function(){
+      var bp = document.createElement('script');
+      var curProtocol = window.location.protocol.split(':')[0];
+      if (curProtocol === 'https') {
+        bp.src = 'https://zz.bdstatic.com/linksubmit/push.js'; 
+      }
+      else {
+        bp.src = 'http://push.zhanzhang.baidu.com/push.js';
+      }
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(bp, s);
+    })();
+  </script>
+
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>
