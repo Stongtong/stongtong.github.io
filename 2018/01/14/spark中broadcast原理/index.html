@@ -1,0 +1,1390 @@
+<!DOCTYPE html>
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+
+<html class="theme-next gemini use-motion" lang="zh-CN">
+<head><meta name="generator" content="Hexo 3.8.0">
+  <meta charset="UTF-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2">
+
+<link rel="stylesheet" href="/css/main.css?v=7.0.0">
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png?v=7.0.0">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png?v=7.0.0">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png?v=7.0.0">
+
+
+  <link rel="mask-icon" href="/images/logo.svg?v=7.0.0" color="#222">
+
+
+
+
+
+
+
+<script id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Gemini',
+    version: '7.0.0',
+    sidebar: {"position":"left","display":"post","offset":12,"b2t":false,"scrollpercent":false,"onmobile":false},
+    fancybox: false,
+    fastclick: false,
+    lazyload: false,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+  
+
+
+
+
+  <meta name="description" content="摘要：spark中的broadcast提供了一种广播的机制，提供了共享变量、配置文件等共享变量，本文通过源码分析broadcast机制，spark版本为2.3.1。">
+<meta name="keywords" content="Spark，Broadcast">
+<meta property="og:type" content="article">
+<meta property="og:title" content="spark中的Broadcast原理">
+<meta property="og:url" content="https://tongfan.xyz/2018/01/14/spark中broadcast原理/index.html">
+<meta property="og:site_name" content="XTong notes">
+<meta property="og:description" content="摘要：spark中的broadcast提供了一种广播的机制，提供了共享变量、配置文件等共享变量，本文通过源码分析broadcast机制，spark版本为2.3.1。">
+<meta property="og:locale" content="zh-CN">
+<meta property="og:updated_time" content="2019-02-26T14:47:16.653Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="spark中的Broadcast原理">
+<meta name="twitter:description" content="摘要：spark中的broadcast提供了一种广播的机制，提供了共享变量、配置文件等共享变量，本文通过源码分析broadcast机制，spark版本为2.3.1。">
+
+
+
+  <link rel="alternate" href="/atom.xml" title="XTong notes" type="application/atom+xml">
+
+
+
+
+  <link rel="canonical" href="https://tongfan.xyz/2018/01/14/spark中broadcast原理/">
+
+
+
+<script id="page.configurations">
+  CONFIG.page = {
+    sidebar: "",
+  };
+</script>
+
+  <title>spark中的Broadcast原理 | XTong notes</title>
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .motion-element,
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-title { opacity: initial; }
+
+  .use-motion .logo,
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-CN">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">XTong notes</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+    
+      
+        <h1 class="site-subtitle" itemprop="description">Live beautifully, dream passionately, love completely</h1>
+      
+    
+    
+  </div>
+
+  <div class="site-nav-toggle">
+    <button aria-label="切换导航栏">
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  
+    <ul id="menu" class="menu">
+      
+        
+        
+        
+          
+          <li class="menu-item menu-item-home">
+
+    
+    
+    
+      
+    
+
+    
+      
+    
+
+    <a href="/" rel="section"><i class="menu-item-icon fa fa-fw fa-home"></i> <br>首页</a>
+
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-about">
+
+    
+    
+    
+      
+    
+
+    
+      
+    
+
+    <a href="/about/" rel="section"><i class="menu-item-icon fa fa-fw fa-user"></i> <br>关于</a>
+
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-tags">
+
+    
+    
+    
+      
+    
+
+    
+      
+    
+
+    <a href="/tags/" rel="section"><i class="menu-item-icon fa fa-fw fa-tags"></i> <br>标签<span class="badge">10</span></a>
+
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-categories">
+
+    
+    
+    
+      
+    
+
+    
+      
+    
+
+    <a href="/categories/" rel="section"><i class="menu-item-icon fa fa-fw fa-th"></i> <br>分类<span class="badge">5</span></a>
+
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-archives">
+
+    
+    
+    
+      
+    
+
+    
+      
+    
+
+    <a href="/archives/" rel="section"><i class="menu-item-icon fa fa-fw fa-archive"></i> <br>归档<span class="badge">8</span></a>
+
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-sitemap">
+
+    
+    
+    
+      
+    
+
+    
+      
+    
+
+    <a href="/sitemap.xml" rel="section"><i class="menu-item-icon fa fa-fw fa-sitemap"></i> <br>站点地图</a>
+
+  </li>
+
+      
+      
+        <li class="menu-item menu-item-search">
+          
+            <a href="javascript:;" class="popup-trigger">
+          
+            
+              <i class="menu-item-icon fa fa-search fa-fw"></i> <br>搜索</a>
+        </li>
+      
+    </ul>
+  
+
+  
+
+  
+    <div class="site-search">
+      
+  <div class="popup search-popup local-search-popup">
+  <div class="local-search-header clearfix">
+    <span class="search-icon">
+      <i class="fa fa-search"></i>
+    </span>
+    <span class="popup-btn-close">
+      <i class="fa fa-times-circle"></i>
+    </span>
+    <div class="local-search-input-wrapper">
+      <input autocomplete="off" placeholder="搜索..." spellcheck="false" type="text" id="local-search-input">
+    </div>
+  </div>
+  <div id="local-search-result"></div>
+</div>
+
+
+
+    </div>
+  
+</nav>
+
+
+
+  
+
+
+
+</div>
+    </header>
+
+    
+
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+            
+
+          
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://tongfan.xyz/2018/01/14/spark中broadcast原理/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="XiaoTong Wang">
+      <meta itemprop="description" content="You Never Know Who You Are">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="XTong notes">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h2 class="post-title" itemprop="name headline">spark中的Broadcast原理
+
+              
+            
+          </h2>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+
+            
+            
+            
+
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+
+              
+                
+              
+
+              <time title="创建时间：2018-01-14 19:12:24" itemprop="dateCreated datePublished" datetime="2018-01-14T19:12:24+08:00">2018-01-14</time>
+            
+
+            
+              
+
+              
+                
+                <span class="post-meta-divider">|</span>
+                
+
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-calendar-check-o"></i>
+                </span>
+                
+                  <span class="post-meta-item-text">更新于</span>
+                
+                <time title="修改时间：2019-02-26 22:47:16" itemprop="dateModified" datetime="2019-02-26T22:47:16+08:00">2019-02-26</time>
+              
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing"><a href="/categories/Spark/" itemprop="url" rel="index"><span itemprop="name">Spark</span></a></span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+            
+              
+              <span class="post-comments-count">
+                <span class="post-meta-divider">|</span>
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-comment-o"></i>
+                </span>
+            
+                <span class="post-meta-item-text">评论数：</span>
+                <a href="/2018/01/14/spark中broadcast原理/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count valine-comment-count" data-xid="/2018/01/14/spark中broadcast原理/" itemprop="commentCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p><strong>摘要：</strong>spark中的broadcast提供了一种广播的机制，提供了共享变量、配置文件等共享变量，本文通过源码分析broadcast机制，spark版本为2.3.1。</p>
+<a id="more"></a>
+<h1 id="Broadcast"><a href="#Broadcast" class="headerlink" title="Broadcast"></a>Broadcast</h1><p>简而言之，bc就是把原来只保存一份在driver上的数据，由于每个task都能用到该数据，所以bc是策略就是在每个运行的machine上保存一份该类数据，而不必每个task都去driver去拉去，提高程序的处理效率。在为每一个节点保存一份较大的输入数据集而不是每个task保存一份，这是一种很高效的手段，而且spark还尝试用高效的高效broadcast算法去减少传输过程中网络通信开销。具体使用如下：</p>
+<figure class="highlight scala"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">val</span> sc = <span class="keyword">new</span> <span class="type">SparkContext</span>(sparkConf)</span><br><span class="line"><span class="comment">// 申明</span></span><br><span class="line"><span class="keyword">val</span> bcValue: <span class="type">Broadcast</span>[<span class="type">HashMap</span>[<span class="type">Int</span>, <span class="type">Int</span>]] = sc.broadcast(<span class="type">HashMap</span>(<span class="number">1</span> -&gt; <span class="number">2</span>, <span class="number">2</span> -&gt; <span class="number">3</span>, <span class="number">3</span> -&gt; <span class="number">4</span>, <span class="number">4</span> -&gt; <span class="number">5</span>))</span><br><span class="line"><span class="comment">// 使用</span></span><br><span class="line">bcValue.value.contains(key)</span><br><span class="line"><span class="comment">// 异步删除executor上的缓存备份，如果要再次使用则会重新发送，默认不会blocking，除非显示指定</span></span><br><span class="line">bcValue.unpersist</span><br><span class="line"><span class="comment">// 销毁和此bc相关的所有数据和元数据，使用要谨慎，因为一旦销毁bc变量，将不能再使用，此方法会blocking，直到此操作完成</span></span><br><span class="line">bcValue.destroy</span><br></pre></td></tr></table></figure>
+<h1 id="实现方式"><a href="#实现方式" class="headerlink" title="实现方式"></a>实现方式</h1><p>下面说明spark中bc的具体实现，不同类的代码逻辑上连续的会贴在一起，这里注明类名；</p>
+<figure class="highlight scala"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// SparkContext </span></span><br><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">broadcast</span></span>[<span class="type">T</span>: <span class="type">ClassTag</span>](value: <span class="type">T</span>): <span class="type">Broadcast</span>[<span class="type">T</span>] = &#123;</span><br><span class="line">   assertNotStopped()</span><br><span class="line">   require(!classOf[<span class="type">RDD</span>[_]].isAssignableFrom(classTag[<span class="type">T</span>].runtimeClass),</span><br><span class="line">     <span class="string">"Can not directly broadcast RDDs; instead, call collect() and broadcast the result."</span>)</span><br><span class="line">   <span class="comment">//bc manager进行初始化， bc的变量是只读变量，不能修改</span></span><br><span class="line">   <span class="keyword">val</span> bc = env.broadcastManager.newBroadcast[<span class="type">T</span>](value, isLocal)</span><br><span class="line">   <span class="keyword">val</span> callSite = getCallSite</span><br><span class="line">   logInfo(<span class="string">"Created broadcast "</span> + bc.id + <span class="string">" from "</span> + callSite.shortForm)</span><br><span class="line">   cleaner.foreach(_.registerBroadcastForCleanup(bc))</span><br><span class="line">   bc</span><br><span class="line"> &#125;</span><br><span class="line"> <span class="comment">// BroadcastManager</span></span><br><span class="line"> <span class="keyword">private</span> <span class="keyword">val</span> nextBroadcastId = <span class="keyword">new</span> <span class="type">AtomicLong</span>(<span class="number">0</span>)</span><br><span class="line"> <span class="function"><span class="keyword">def</span> <span class="title">newBroadcast</span></span>[<span class="type">T</span>: <span class="type">ClassTag</span>](value_ : <span class="type">T</span>, isLocal: <span class="type">Boolean</span>): <span class="type">Broadcast</span>[<span class="type">T</span>] = &#123;</span><br><span class="line">   <span class="comment">// 生成bc id，factory 根据 不是不本地、value和id生成新的bc实例</span></span><br><span class="line">   broadcastFactory.newBroadcast[<span class="type">T</span>](value_, isLocal, nextBroadcastId.getAndIncrement())</span><br><span class="line"> &#125;</span><br></pre></td></tr></table></figure>
+<h1 id="TorrentBroadcast"><a href="#TorrentBroadcast" class="headerlink" title="TorrentBroadcast"></a>TorrentBroadcast</h1><p>spark中实现bc的方式为TorrentBroadcast，类申明如下：</p>
+<p>其实现原理为driver将序列化的对象划分成多个chuck，并将多个chuck保存在driver的BlockManager中，在每个executor上，executor第一次尝试从它本身的BlockManager中获取此对象时，如果不存在，它会从driver和其他executor上去拉取（如果其他executor上的object是可用的），一旦回去这些chuck，它会将其保存在它自己的BlockManager中，准备为其他executor（还未获取对象）的拉取最好准备。</p>
+<figure class="highlight scala"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br><span class="line">116</span><br><span class="line">117</span><br><span class="line">118</span><br><span class="line">119</span><br><span class="line">120</span><br><span class="line">121</span><br><span class="line">122</span><br><span class="line">123</span><br><span class="line">124</span><br><span class="line">125</span><br><span class="line">126</span><br><span class="line">127</span><br><span class="line">128</span><br><span class="line">129</span><br><span class="line">130</span><br><span class="line">131</span><br><span class="line">132</span><br><span class="line">133</span><br><span class="line">134</span><br><span class="line">135</span><br><span class="line">136</span><br><span class="line">137</span><br><span class="line">138</span><br><span class="line">139</span><br><span class="line">140</span><br><span class="line">141</span><br><span class="line">142</span><br><span class="line">143</span><br><span class="line">144</span><br><span class="line">145</span><br><span class="line">146</span><br><span class="line">147</span><br><span class="line">148</span><br><span class="line">149</span><br><span class="line">150</span><br><span class="line">151</span><br><span class="line">152</span><br><span class="line">153</span><br><span class="line">154</span><br><span class="line">155</span><br><span class="line">156</span><br><span class="line">157</span><br><span class="line">158</span><br><span class="line">159</span><br><span class="line">160</span><br><span class="line">161</span><br><span class="line">162</span><br><span class="line">163</span><br><span class="line">164</span><br><span class="line">165</span><br><span class="line">166</span><br><span class="line">167</span><br><span class="line">168</span><br><span class="line">169</span><br><span class="line">170</span><br><span class="line">171</span><br><span class="line">172</span><br><span class="line">173</span><br><span class="line">174</span><br><span class="line">175</span><br><span class="line">176</span><br><span class="line">177</span><br><span class="line">178</span><br><span class="line">179</span><br><span class="line">180</span><br><span class="line">181</span><br><span class="line">182</span><br><span class="line">183</span><br><span class="line">184</span><br><span class="line">185</span><br><span class="line">186</span><br><span class="line">187</span><br><span class="line">188</span><br><span class="line">189</span><br><span class="line">190</span><br><span class="line">191</span><br><span class="line">192</span><br><span class="line">193</span><br><span class="line">194</span><br><span class="line">195</span><br><span class="line">196</span><br><span class="line">197</span><br><span class="line">198</span><br><span class="line">199</span><br><span class="line">200</span><br><span class="line">201</span><br><span class="line">202</span><br><span class="line">203</span><br><span class="line">204</span><br><span class="line">205</span><br><span class="line">206</span><br><span class="line">207</span><br><span class="line">208</span><br><span class="line">209</span><br><span class="line">210</span><br><span class="line">211</span><br><span class="line">212</span><br><span class="line">213</span><br><span class="line">214</span><br><span class="line">215</span><br><span class="line">216</span><br><span class="line">217</span><br><span class="line">218</span><br><span class="line">219</span><br><span class="line">220</span><br><span class="line">221</span><br><span class="line">222</span><br><span class="line">223</span><br><span class="line">224</span><br><span class="line">225</span><br><span class="line">226</span><br><span class="line">227</span><br><span class="line">228</span><br><span class="line">229</span><br><span class="line">230</span><br><span class="line">231</span><br><span class="line">232</span><br><span class="line">233</span><br><span class="line">234</span><br><span class="line">235</span><br><span class="line">236</span><br><span class="line">237</span><br><span class="line">238</span><br><span class="line">239</span><br><span class="line">240</span><br><span class="line">241</span><br><span class="line">242</span><br><span class="line">243</span><br><span class="line">244</span><br><span class="line">245</span><br><span class="line">246</span><br><span class="line">247</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">private</span>[spark] <span class="class"><span class="keyword">class</span> <span class="title">TorrentBroadcast</span>[<span class="type">T</span>: <span class="type">ClassTag</span>](<span class="params">obj: <span class="type">T</span>, id: <span class="type">Long</span></span>)</span></span><br><span class="line"><span class="class">  <span class="keyword">extends</span> <span class="title">Broadcast</span>[<span class="type">T</span>](<span class="params">id</span>) <span class="keyword">with</span> <span class="title">Logging</span> <span class="keyword">with</span> <span class="title">Serializable</span> </span>&#123;</span><br><span class="line">  <span class="comment">// bc 的读取操作是lazy的</span></span><br><span class="line">  <span class="meta">@transient</span> <span class="keyword">private</span> <span class="keyword">lazy</span> <span class="keyword">val</span> _value: <span class="type">T</span> = readBroadcastBlock()</span><br><span class="line"></span><br><span class="line">  <span class="comment">/** The compression codec to use, or None if compression is disabled */</span></span><br><span class="line">  <span class="comment">// spark.broadcast.compress</span></span><br><span class="line">  <span class="meta">@transient</span> <span class="keyword">private</span> <span class="keyword">var</span> compressionCodec: <span class="type">Option</span>[<span class="type">CompressionCodec</span>] = _</span><br><span class="line">  <span class="comment">/** Size of each block. Default value is 4MB.  This value is only read by the broadcaster. */</span></span><br><span class="line">  <span class="comment">// spark.broadcast.blockSize</span></span><br><span class="line">  <span class="meta">@transient</span> <span class="keyword">private</span> <span class="keyword">var</span> blockSize: <span class="type">Int</span> = _</span><br><span class="line">  <span class="comment">// spark.broadcast.checksum</span></span><br><span class="line">  <span class="comment">// 在类初始化的过程中，会先从配置的sparkconf中查找上面三个配置项，如果存在进行加载，否则使用默认，然后会获取bc 生成的id，这个id就是上面实例化bc时生成的原子id；</span></span><br><span class="line">  <span class="keyword">private</span> <span class="keyword">val</span> broadcastId = <span class="type">BroadcastBlockId</span>(id)</span><br><span class="line"></span><br><span class="line">  <span class="comment">/** Total number of blocks this broadcast variable contains. */</span></span><br><span class="line">  <span class="keyword">private</span> <span class="keyword">val</span> numBlocks: <span class="type">Int</span> = writeBlocks(obj)</span><br><span class="line"></span><br><span class="line">  <span class="keyword">private</span> <span class="function"><span class="keyword">def</span> <span class="title">calcChecksum</span></span>(block: <span class="type">ByteBuffer</span>): <span class="type">Int</span> = &#123;</span><br><span class="line">    <span class="keyword">val</span> adler = <span class="keyword">new</span> <span class="type">Adler32</span>()</span><br><span class="line">    <span class="keyword">if</span> (block.hasArray) &#123;</span><br><span class="line">      adler.update(block.array, block.arrayOffset + block.position(), block.limit()</span><br><span class="line">        - block.position())</span><br><span class="line">    &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">      <span class="keyword">val</span> bytes = <span class="keyword">new</span> <span class="type">Array</span>[<span class="type">Byte</span>](block.remaining())</span><br><span class="line">      block.duplicate.get(bytes)</span><br><span class="line">      adler.update(bytes)</span><br><span class="line">    &#125;</span><br><span class="line">    adler.getValue.toInt</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="comment">/**</span></span><br><span class="line"><span class="comment">   * Divide the object into multiple blocks and put those blocks in the block manager.</span></span><br><span class="line"><span class="comment">   *</span></span><br><span class="line"><span class="comment">   * @param value the object to divide</span></span><br><span class="line"><span class="comment">   * @return number of blocks this broadcast variable is divided into</span></span><br><span class="line"><span class="comment">   */</span></span><br><span class="line">  <span class="keyword">private</span> <span class="function"><span class="keyword">def</span> <span class="title">writeBlocks</span></span>(value: <span class="type">T</span>): <span class="type">Int</span> = &#123;</span><br><span class="line">    <span class="keyword">import</span> <span class="type">StorageLevel</span>._</span><br><span class="line">    <span class="comment">// Store a copy of the broadcast variable in the driver so that tasks run on the driver</span></span><br><span class="line">    <span class="comment">// do not create a duplicate copy of the broadcast variable's value.</span></span><br><span class="line">    <span class="keyword">val</span> blockManager = <span class="type">SparkEnv</span>.get.blockManager</span><br><span class="line">    <span class="comment">// 注意：这里的默认的bc storage级别为M&amp;D</span></span><br><span class="line">    <span class="keyword">if</span> (!blockManager.putSingle(broadcastId, value, <span class="type">MEMORY_AND_DISK</span>, tellMaster = <span class="literal">false</span>)) &#123;</span><br><span class="line">      <span class="keyword">throw</span> <span class="keyword">new</span> <span class="type">SparkException</span>(<span class="string">s"Failed to store <span class="subst">$broadcastId</span> in BlockManager"</span>)</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">val</span> blocks =</span><br><span class="line">      <span class="type">TorrentBroadcast</span>.blockifyObject(value, blockSize, <span class="type">SparkEnv</span>.get.serializer, compressionCodec)</span><br><span class="line">    <span class="keyword">if</span> (checksumEnabled) &#123;</span><br><span class="line">      checksums = <span class="keyword">new</span> <span class="type">Array</span>[<span class="type">Int</span>](blocks.length)</span><br><span class="line">    &#125;</span><br><span class="line">    blocks.zipWithIndex.foreach &#123; <span class="keyword">case</span> (block, i) =&gt;</span><br><span class="line">      <span class="keyword">if</span> (checksumEnabled) &#123;</span><br><span class="line">        checksums(i) = calcChecksum(block)</span><br><span class="line">      &#125;</span><br><span class="line">      <span class="keyword">val</span> pieceId = <span class="type">BroadcastBlockId</span>(id, <span class="string">"piece"</span> + i)</span><br><span class="line">      <span class="keyword">val</span> bytes = <span class="keyword">new</span> <span class="type">ChunkedByteBuffer</span>(block.duplicate())</span><br><span class="line">      <span class="keyword">if</span> (!blockManager.putBytes(pieceId, bytes, <span class="type">MEMORY_AND_DISK_SER</span>, tellMaster = <span class="literal">true</span>)) &#123;</span><br><span class="line">        <span class="keyword">throw</span> <span class="keyword">new</span> <span class="type">SparkException</span>(<span class="string">s"Failed to store <span class="subst">$pieceId</span> of <span class="subst">$broadcastId</span> in local BlockManager"</span>)</span><br><span class="line">      &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    blocks.length</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="comment">/** Fetch torrent blocks from the driver and/or other executors. */</span></span><br><span class="line">  <span class="keyword">private</span> <span class="function"><span class="keyword">def</span> <span class="title">readBlocks</span></span>(): <span class="type">Array</span>[<span class="type">BlockData</span>] = &#123;</span><br><span class="line">    <span class="comment">// Fetch chunks of data. Note that all these chunks are stored in the BlockManager and reported</span></span><br><span class="line">    <span class="comment">// to the driver, so other executors can pull these chunks from this executor as well.</span></span><br><span class="line">    <span class="keyword">val</span> blocks = <span class="keyword">new</span> <span class="type">Array</span>[<span class="type">BlockData</span>](numBlocks)</span><br><span class="line">    <span class="keyword">val</span> bm = <span class="type">SparkEnv</span>.get.blockManager</span><br><span class="line"></span><br><span class="line">    <span class="keyword">for</span> (pid &lt;- <span class="type">Random</span>.shuffle(<span class="type">Seq</span>.range(<span class="number">0</span>, numBlocks))) &#123;</span><br><span class="line">      <span class="keyword">val</span> pieceId = <span class="type">BroadcastBlockId</span>(id, <span class="string">"piece"</span> + pid)</span><br><span class="line">      logDebug(<span class="string">s"Reading piece <span class="subst">$pieceId</span> of <span class="subst">$broadcastId</span>"</span>)</span><br><span class="line">      <span class="comment">// First try getLocalBytes because there is a chance that previous attempts to fetch the</span></span><br><span class="line">      <span class="comment">// broadcast blocks have already fetched some of the blocks. In that case, some blocks</span></span><br><span class="line">      <span class="comment">// would be available locally (on this executor).</span></span><br><span class="line">      bm.getLocalBytes(pieceId) <span class="keyword">match</span> &#123;</span><br><span class="line">        <span class="keyword">case</span> <span class="type">Some</span>(block) =&gt;</span><br><span class="line">          blocks(pid) = block</span><br><span class="line">          releaseLock(pieceId)</span><br><span class="line">        <span class="keyword">case</span> <span class="type">None</span> =&gt;</span><br><span class="line">          bm.getRemoteBytes(pieceId) <span class="keyword">match</span> &#123;</span><br><span class="line">            <span class="keyword">case</span> <span class="type">Some</span>(b) =&gt;</span><br><span class="line">              <span class="keyword">if</span> (checksumEnabled) &#123;</span><br><span class="line">                <span class="keyword">val</span> sum = calcChecksum(b.chunks(<span class="number">0</span>))</span><br><span class="line">                <span class="keyword">if</span> (sum != checksums(pid)) &#123;</span><br><span class="line">                  <span class="keyword">throw</span> <span class="keyword">new</span> <span class="type">SparkException</span>(<span class="string">s"corrupt remote block <span class="subst">$pieceId</span> of <span class="subst">$broadcastId</span>:"</span> +</span><br><span class="line">                    <span class="string">s" <span class="subst">$sum</span> != <span class="subst">$&#123;checksums(pid)&#125;</span>"</span>)</span><br><span class="line">                &#125;</span><br><span class="line">              &#125;</span><br><span class="line">              <span class="comment">// We found the block from remote executors/driver's BlockManager, so put the block</span></span><br><span class="line">              <span class="comment">// in this executor's BlockManager.</span></span><br><span class="line">              <span class="keyword">if</span> (!bm.putBytes(pieceId, b, <span class="type">StorageLevel</span>.<span class="type">MEMORY_AND_DISK_SER</span>, tellMaster = <span class="literal">true</span>)) &#123;</span><br><span class="line">                <span class="keyword">throw</span> <span class="keyword">new</span> <span class="type">SparkException</span>(</span><br><span class="line">                  <span class="string">s"Failed to store <span class="subst">$pieceId</span> of <span class="subst">$broadcastId</span> in local BlockManager"</span>)</span><br><span class="line">              &#125;</span><br><span class="line">              blocks(pid) = <span class="keyword">new</span> <span class="type">ByteBufferBlockData</span>(b, <span class="literal">true</span>)</span><br><span class="line">            <span class="keyword">case</span> <span class="type">None</span> =&gt;</span><br><span class="line">              <span class="keyword">throw</span> <span class="keyword">new</span> <span class="type">SparkException</span>(<span class="string">s"Failed to get <span class="subst">$pieceId</span> of <span class="subst">$broadcastId</span>"</span>)</span><br><span class="line">          &#125;</span><br><span class="line">      &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    blocks</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="comment">/**</span></span><br><span class="line"><span class="comment">   * Remove all persisted state associated with this Torrent broadcast on the executors.</span></span><br><span class="line"><span class="comment">   */</span></span><br><span class="line">  <span class="keyword">override</span> <span class="keyword">protected</span> <span class="function"><span class="keyword">def</span> <span class="title">doUnpersist</span></span>(blocking: <span class="type">Boolean</span>) &#123;</span><br><span class="line">    <span class="type">TorrentBroadcast</span>.unpersist(id, removeFromDriver = <span class="literal">false</span>, blocking)</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="comment">/**</span></span><br><span class="line"><span class="comment">   * Remove all persisted state associated with this Torrent broadcast on the executors</span></span><br><span class="line"><span class="comment">   * and driver.</span></span><br><span class="line"><span class="comment">   */</span></span><br><span class="line">  <span class="keyword">override</span> <span class="keyword">protected</span> <span class="function"><span class="keyword">def</span> <span class="title">doDestroy</span></span>(blocking: <span class="type">Boolean</span>) &#123;</span><br><span class="line">    <span class="type">TorrentBroadcast</span>.unpersist(id, removeFromDriver = <span class="literal">true</span>, blocking)</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="comment">/** Used by the JVM when serializing this object. */</span></span><br><span class="line">  <span class="keyword">private</span> <span class="function"><span class="keyword">def</span> <span class="title">writeObject</span></span>(out: <span class="type">ObjectOutputStream</span>): <span class="type">Unit</span> = <span class="type">Utils</span>.tryOrIOException &#123;</span><br><span class="line">    assertValid()</span><br><span class="line">    out.defaultWriteObject()</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">private</span> <span class="function"><span class="keyword">def</span> <span class="title">readBroadcastBlock</span></span>(): <span class="type">T</span> = <span class="type">Utils</span>.tryOrIOException &#123;</span><br><span class="line">    <span class="type">TorrentBroadcast</span>.synchronized &#123;</span><br><span class="line">      <span class="keyword">val</span> broadcastCache = <span class="type">SparkEnv</span>.get.broadcastManager.cachedValues</span><br><span class="line"></span><br><span class="line">      <span class="type">Option</span>(broadcastCache.get(broadcastId)).map(_.asInstanceOf[<span class="type">T</span>]).getOrElse &#123;</span><br><span class="line">        setConf(<span class="type">SparkEnv</span>.get.conf)</span><br><span class="line">        <span class="keyword">val</span> blockManager = <span class="type">SparkEnv</span>.get.blockManager</span><br><span class="line">        blockManager.getLocalValues(broadcastId) <span class="keyword">match</span> &#123;</span><br><span class="line">          <span class="keyword">case</span> <span class="type">Some</span>(blockResult) =&gt;</span><br><span class="line">            <span class="keyword">if</span> (blockResult.data.hasNext) &#123;</span><br><span class="line">              <span class="keyword">val</span> x = blockResult.data.next().asInstanceOf[<span class="type">T</span>]</span><br><span class="line">              releaseLock(broadcastId)</span><br><span class="line"></span><br><span class="line">              <span class="keyword">if</span> (x != <span class="literal">null</span>) &#123;</span><br><span class="line">                broadcastCache.put(broadcastId, x)</span><br><span class="line">              &#125;</span><br><span class="line"></span><br><span class="line">              x</span><br><span class="line">            &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">              <span class="keyword">throw</span> <span class="keyword">new</span> <span class="type">SparkException</span>(<span class="string">s"Failed to get locally stored broadcast data: <span class="subst">$broadcastId</span>"</span>)</span><br><span class="line">            &#125;</span><br><span class="line">          <span class="keyword">case</span> <span class="type">None</span> =&gt;</span><br><span class="line">            logInfo(<span class="string">"Started reading broadcast variable "</span> + id)</span><br><span class="line">            <span class="keyword">val</span> startTimeMs = <span class="type">System</span>.currentTimeMillis()</span><br><span class="line">            <span class="keyword">val</span> blocks = readBlocks()</span><br><span class="line">            logInfo(<span class="string">"Reading broadcast variable "</span> + id + <span class="string">" took"</span> + <span class="type">Utils</span>.getUsedTimeMs(startTimeMs))</span><br><span class="line"></span><br><span class="line">            <span class="keyword">try</span> &#123;</span><br><span class="line">              <span class="keyword">val</span> obj = <span class="type">TorrentBroadcast</span>.unBlockifyObject[<span class="type">T</span>](</span><br><span class="line">                blocks.map(_.toInputStream()), <span class="type">SparkEnv</span>.get.serializer, compressionCodec)</span><br><span class="line">              <span class="comment">// Store the merged copy in BlockManager so other tasks on this executor don't</span></span><br><span class="line">              <span class="comment">// need to re-fetch it.</span></span><br><span class="line">              <span class="keyword">val</span> storageLevel = <span class="type">StorageLevel</span>.<span class="type">MEMORY_AND_DISK</span></span><br><span class="line">              <span class="keyword">if</span> (!blockManager.putSingle(broadcastId, obj, storageLevel, tellMaster = <span class="literal">false</span>)) &#123;</span><br><span class="line">                <span class="keyword">throw</span> <span class="keyword">new</span> <span class="type">SparkException</span>(<span class="string">s"Failed to store <span class="subst">$broadcastId</span> in BlockManager"</span>)</span><br><span class="line">              &#125;</span><br><span class="line"></span><br><span class="line">              <span class="keyword">if</span> (obj != <span class="literal">null</span>) &#123;</span><br><span class="line">                broadcastCache.put(broadcastId, obj)</span><br><span class="line">              &#125;</span><br><span class="line"></span><br><span class="line">              obj</span><br><span class="line">            &#125; <span class="keyword">finally</span> &#123;</span><br><span class="line">              blocks.foreach(_.dispose())</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">      &#125;</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="comment">/**</span></span><br><span class="line"><span class="comment">   * If running in a task, register the given block's locks for release upon task completion.</span></span><br><span class="line"><span class="comment">   * Otherwise, if not running in a task then immediately release the lock.</span></span><br><span class="line"><span class="comment">   */</span></span><br><span class="line">  <span class="keyword">private</span> <span class="function"><span class="keyword">def</span> <span class="title">releaseLock</span></span>(blockId: <span class="type">BlockId</span>): <span class="type">Unit</span> = &#123;</span><br><span class="line">    <span class="keyword">val</span> blockManager = <span class="type">SparkEnv</span>.get.blockManager</span><br><span class="line">    <span class="type">Option</span>(<span class="type">TaskContext</span>.get()) <span class="keyword">match</span> &#123;</span><br><span class="line">      <span class="keyword">case</span> <span class="type">Some</span>(taskContext) =&gt;</span><br><span class="line">        taskContext.addTaskCompletionListener(_ =&gt; blockManager.releaseLock(blockId))</span><br><span class="line">      <span class="keyword">case</span> <span class="type">None</span> =&gt;</span><br><span class="line">        <span class="comment">// This should only happen on the driver, where broadcast variables may be accessed</span></span><br><span class="line">        <span class="comment">// outside of running tasks (e.g. when computing rdd.partitions()). In order to allow</span></span><br><span class="line">        <span class="comment">// broadcast variables to be garbage collected we need to free the reference here</span></span><br><span class="line">        <span class="comment">// which is slightly unsafe but is technically okay because broadcast variables aren't</span></span><br><span class="line">        <span class="comment">// stored off-heap.</span></span><br><span class="line">        blockManager.releaseLock(blockId)</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="keyword">private</span> <span class="class"><span class="keyword">object</span> <span class="title">TorrentBroadcast</span> <span class="keyword">extends</span> <span class="title">Logging</span> </span>&#123;</span><br><span class="line"></span><br><span class="line">  <span class="function"><span class="keyword">def</span> <span class="title">blockifyObject</span></span>[<span class="type">T</span>: <span class="type">ClassTag</span>](</span><br><span class="line">      obj: <span class="type">T</span>,</span><br><span class="line">      blockSize: <span class="type">Int</span>,</span><br><span class="line">      serializer: <span class="type">Serializer</span>,</span><br><span class="line">      compressionCodec: <span class="type">Option</span>[<span class="type">CompressionCodec</span>]): <span class="type">Array</span>[<span class="type">ByteBuffer</span>] = &#123;</span><br><span class="line">    <span class="keyword">val</span> cbbos = <span class="keyword">new</span> <span class="type">ChunkedByteBufferOutputStream</span>(blockSize, <span class="type">ByteBuffer</span>.allocate)</span><br><span class="line">    <span class="keyword">val</span> out = compressionCodec.map(c =&gt; c.compressedOutputStream(cbbos)).getOrElse(cbbos)</span><br><span class="line">    <span class="keyword">val</span> ser = serializer.newInstance()</span><br><span class="line">    <span class="keyword">val</span> serOut = ser.serializeStream(out)</span><br><span class="line">    <span class="type">Utils</span>.tryWithSafeFinally &#123;</span><br><span class="line">      serOut.writeObject[<span class="type">T</span>](obj)</span><br><span class="line">    &#125; &#123;</span><br><span class="line">      serOut.close()</span><br><span class="line">    &#125;</span><br><span class="line">    cbbos.toChunkedByteBuffer.getChunks()</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="function"><span class="keyword">def</span> <span class="title">unBlockifyObject</span></span>[<span class="type">T</span>: <span class="type">ClassTag</span>](</span><br><span class="line">      blocks: <span class="type">Array</span>[<span class="type">InputStream</span>],</span><br><span class="line">      serializer: <span class="type">Serializer</span>,</span><br><span class="line">      compressionCodec: <span class="type">Option</span>[<span class="type">CompressionCodec</span>]): <span class="type">T</span> = &#123;</span><br><span class="line">    require(blocks.nonEmpty, <span class="string">"Cannot unblockify an empty array of blocks"</span>)</span><br><span class="line">    <span class="keyword">val</span> is = <span class="keyword">new</span> <span class="type">SequenceInputStream</span>(blocks.iterator.asJavaEnumeration)</span><br><span class="line">    <span class="keyword">val</span> in: <span class="type">InputStream</span> = compressionCodec.map(c =&gt; c.compressedInputStream(is)).getOrElse(is)</span><br><span class="line">    <span class="keyword">val</span> ser = serializer.newInstance()</span><br><span class="line">    <span class="keyword">val</span> serIn = ser.deserializeStream(in)</span><br><span class="line">    <span class="keyword">val</span> obj = <span class="type">Utils</span>.tryWithSafeFinally &#123;</span><br><span class="line">      serIn.readObject[<span class="type">T</span>]()</span><br><span class="line">    &#125; &#123;</span><br><span class="line">      serIn.close()</span><br><span class="line">    &#125;</span><br><span class="line">    obj</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="comment">/**</span></span><br><span class="line"><span class="comment">   * Remove all persisted blocks associated with this torrent broadcast on the executors.</span></span><br><span class="line"><span class="comment">   * If removeFromDriver is true, also remove these persisted blocks on the driver.</span></span><br><span class="line"><span class="comment">   */</span></span><br><span class="line">  <span class="function"><span class="keyword">def</span> <span class="title">unpersist</span></span>(id: <span class="type">Long</span>, removeFromDriver: <span class="type">Boolean</span>, blocking: <span class="type">Boolean</span>): <span class="type">Unit</span> = &#123;</span><br><span class="line">    logDebug(<span class="string">s"Unpersisting TorrentBroadcast <span class="subst">$id</span>"</span>)</span><br><span class="line">    <span class="type">SparkEnv</span>.get.blockManager.master.removeBroadcast(id, removeFromDriver, blocking)</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">  </span><br><span class="line">  &#125;</span><br></pre></td></tr></table></figure>
+<h1 id="关于HttpBroadcast的说明"><a href="#关于HttpBroadcast的说明" class="headerlink" title="关于HttpBroadcast的说明"></a>关于HttpBroadcast的说明</h1><p>在网上看了很多人的blog，大家说还要一种HttpBroadcast，但是在最新的2.3.1中的源码中，并未发现这种机制的的广播方式，这种方式主要是依靠http协议来实现bc，通过运行在driver上的http server来获取序列化的对象，删除删除这种方式的主要原因我觉得就是因为服务器模式的单点压力太大，而且发送的数据量偏大时，可能会造成driver网络、资源很快被耗尽，影响程序整体的执行，甚至造成程序故障。</p>
+<div class="note primary">
+            <h4 id="本文作者：tongtong"><a href="#本文作者：tongtong" class="headerlink" title="本文作者：tongtong"></a>本文作者：tongtong</h4><h4 id="本文链接：https-stongtong-github-io"><a href="#本文链接：https-stongtong-github-io" class="headerlink" title="本文链接：https://stongtong.github.io/"></a>本文链接：<a href="https://stongtong.github.io/">https://stongtong.github.io/</a></h4><h4 id="版权申明：网站内容为tongtong所有，转载请注明出处。"><a href="#版权申明：网站内容为tongtong所有，转载请注明出处。" class="headerlink" title="版权申明：网站内容为tongtong所有，转载请注明出处。"></a>版权申明：网站内容为tongtong所有，转载请注明出处。</h4>
+          </div>
+
+      
+    </div>
+
+    
+
+    
+    
+    
+
+    
+
+    
+      
+    
+    
+
+    
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/Spark，Broadcast/" rel="tag"># Spark，Broadcast</a>
+          
+        </div>
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2018/01/13/markdown中的绘图语法-md/" rel="next" title="markdown中的绘图语法">
+                <i class="fa fa-chevron-left"></i> markdown中的绘图语法
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2019/02/17/HBASE中的数据刷写/" rel="prev" title="HBASE中的数据刷写">
+                HBASE中的数据刷写 <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+  </div>
+
+
+          </div>
+          
+
+  
+    <div class="comments" id="comments">
+    </div>
+
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+            
+              <img class="site-author-image" itemprop="image" src="/images/avatar.gif" alt="XiaoTong Wang">
+            
+              <p class="site-author-name" itemprop="name">XiaoTong Wang</p>
+              <p class="site-description motion-element" itemprop="description">You Never Know Who You Are</p>
+          </div>
+
+          
+            <nav class="site-state motion-element">
+              
+                <div class="site-state-item site-state-posts">
+                
+                  <a href="/archives/">
+                
+                    <span class="site-state-item-count">8</span>
+                    <span class="site-state-item-name">日志</span>
+                  </a>
+                </div>
+              
+
+              
+                
+                
+                <div class="site-state-item site-state-categories">
+                  <a href="/categories/index.html">
+                    
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                    <span class="site-state-item-count">5</span>
+                    <span class="site-state-item-name">分类</span>
+                  </a>
+                </div>
+              
+
+              
+                
+                
+                <div class="site-state-item site-state-tags">
+                  <a href="/tags/index.html">
+                    
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                    <span class="site-state-item-count">10</span>
+                    <span class="site-state-item-name">标签</span>
+                  </a>
+                </div>
+              
+            </nav>
+          
+
+          
+            <div class="feed-link motion-element">
+              <a href="/atom.xml" rel="alternate">
+                <i class="fa fa-rss"></i>
+                RSS
+              </a>
+            </div>
+          
+
+          
+            <div class="links-of-author motion-element">
+              
+                <span class="links-of-author-item">
+                  
+                  
+                    
+                  
+                  
+                    
+                  
+                  <a href="https://github.com/Stongtong" title="GitHub &rarr; https://github.com/Stongtong" rel="noopener" target="_blank"><i class="fa fa-fw fa-github"></i>GitHub</a>
+                </span>
+              
+                <span class="links-of-author-item">
+                  
+                  
+                    
+                  
+                  
+                    
+                  
+                  <a href="mailto:tongxiao@outlook.com" title="E-Mail &rarr; mailto:tongxiao@outlook.com" rel="noopener" target="_blank"><i class="fa fa-fw fa-envelope"></i>E-Mail</a>
+                </span>
+              
+                <span class="links-of-author-item">
+                  
+                  
+                    
+                  
+                  
+                    
+                  
+                  <a href="https://www.zhihu.com/people/wang-xiao-tong-64-73/activities" title="Zhihu &rarr; https://www.zhihu.com/people/wang-xiao-tong-64-73/activities" rel="noopener" target="_blank"><i class="fa fa-fw fa-flag"></i>Zhihu</a>
+                </span>
+              
+                <span class="links-of-author-item">
+                  
+                  
+                    
+                  
+                  
+                    
+                  
+                  <a href="http://blog.csdn.net/wangxiaotongfan" title="CSDN &rarr; http://blog.csdn.net/wangxiaotongfan" rel="noopener" target="_blank"><i class="fa fa-fw fa-coffee"></i>CSDN</a>
+                </span>
+              
+            </div>
+          
+
+          
+
+          
+          
+
+          
+            
+          
+          
+
+        </div>
+      </div>
+
+      
+      <!--noindex-->
+        <div class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+            
+            
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#Broadcast"><span class="nav-number">1.</span> <span class="nav-text">Broadcast</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#实现方式"><span class="nav-number">2.</span> <span class="nav-text">实现方式</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#TorrentBroadcast"><span class="nav-number">3.</span> <span class="nav-text">TorrentBroadcast</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#关于HttpBroadcast的说明"><span class="nav-number">4.</span> <span class="nav-text">关于HttpBroadcast的说明</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#本文作者：tongtong"><span class="nav-number">4.0.0.1.</span> <span class="nav-text">本文作者：tongtong</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#本文链接：https-stongtong-github-io"><span class="nav-number">4.0.0.2.</span> <span class="nav-text">本文链接：https://stongtong.github.io/</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#版权申明：网站内容为tongtong所有，转载请注明出处。"><span class="nav-number">4.0.0.3.</span> <span class="nav-text">版权申明：网站内容为tongtong所有，转载请注明出处。</span></a></li></ol></li></ol></div>
+            
+
+          </div>
+        </div>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; <span itemprop="copyrightYear">2019</span>
+  <span class="with-love" id="animate">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">XiaoTong Wang</span>
+
+  
+
+  
+</div>
+
+
+
+
+
+
+
+
+
+
+  <script src="https://unpkg.com/mermaid@7.1.2/dist/mermaid.min.js"></script>
+  <script>
+    if (window.mermaid) {
+      mermaid.initialize({theme: 'forest'});
+    }
+  </script>
+
+
+        
+
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+    
+
+    
+
+    
+  </div>
+
+  
+
+<script>
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+    
+    
+  
+  <script color="0,0,255" opacity="0.5" zindex="-1" count="99" src="/lib/canvas-nest/canvas-nest.min.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  <script src="/lib/jquery/index.js?v=2.1.3"></script>
+
+  
+  <script src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+
+  
+  <script src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+
+  
+
+
+  <script src="/js/src/utils.js?v=7.0.0"></script>
+
+  <script src="/js/src/motion.js?v=7.0.0"></script>
+
+
+
+  
+  
+
+
+  <script src="/js/src/affix.js?v=7.0.0"></script>
+
+  <script src="/js/src/schemes/pisces.js?v=7.0.0"></script>
+
+
+
+
+  
+  <script src="/js/src/scrollspy.js?v=7.0.0"></script>
+<script src="/js/src/post-details.js?v=7.0.0"></script>
+
+
+
+  
+
+
+  <script src="/js/src/bootstrap.js?v=7.0.0"></script>
+
+
+
+  
+  
+
+<script src="//cdn1.lncld.net/static/js/3.11.1/av-min.js"></script>
+
+
+
+<script src="//unpkg.com/valine/dist/Valine.min.js"></script>
+
+<script>
+  var GUEST = ['nick', 'mail', 'link'];
+  var guest = 'nick,mail';
+  guest = guest.split(',').filter(function(item) {
+    return GUEST.indexOf(item) > -1;
+  });
+  new Valine({
+    el: '#comments',
+    verify: true,
+    notify: true,
+    appId: 'C5p2It82joj83Mzm0milY5BK-gzGzoHsz',
+    appKey: 'iDq8etLnrVzoVdfbWoOOow4L',
+    placeholder: 'Tell me your story...',
+    avatar: 'mm',
+    meta: guest,
+    pageSize: '10' || 10,
+    visitor: false
+  });
+</script>
+
+
+
+
+  
+
+
+  
+  <script>
+    // Popup Window;
+    var isfetched = false;
+    var isXml = true;
+    // Search DB path;
+    var search_path = "search.xml";
+    if (search_path.length === 0) {
+      search_path = "search.xml";
+    } else if (/json$/i.test(search_path)) {
+      isXml = false;
+    }
+    var path = "/" + search_path;
+    // monitor main search box;
+
+    var onPopupClose = function (e) {
+      $('.popup').hide();
+      $('#local-search-input').val('');
+      $('.search-result-list').remove();
+      $('#no-result').remove();
+      $(".local-search-pop-overlay").remove();
+      $('body').css('overflow', '');
+    }
+
+    function proceedsearch() {
+      $("body")
+        .append('<div class="search-popup-overlay local-search-pop-overlay"></div>')
+        .css('overflow', 'hidden');
+      $('.search-popup-overlay').click(onPopupClose);
+      $('.popup').toggle();
+      var $localSearchInput = $('#local-search-input');
+      $localSearchInput.attr("autocapitalize", "none");
+      $localSearchInput.attr("autocorrect", "off");
+      $localSearchInput.focus();
+    }
+
+    // search function;
+    var searchFunc = function(path, search_id, content_id) {
+      'use strict';
+
+      // start loading animation
+      $("body")
+        .append('<div class="search-popup-overlay local-search-pop-overlay">' +
+          '<div id="search-loading-icon">' +
+          '<i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>' +
+          '</div>' +
+          '</div>')
+        .css('overflow', 'hidden');
+      $("#search-loading-icon").css('margin', '20% auto 0 auto').css('text-align', 'center');
+
+      
+        // ref: https://github.com/ForbesLindesay/unescape-html
+        var unescapeHtml = function(html) {
+          return String(html)
+            .replace(/&quot;/g, '"')
+            .replace(/&#39;/g, '\'')
+            .replace(/&#x3A;/g, ':')
+            // replace all the other &#x; chars
+            .replace(/&#(\d+);/g, function (m, p) { return String.fromCharCode(p); })
+            .replace(/&lt;/g, '<')
+            .replace(/&gt;/g, '>')
+            .replace(/&amp;/g, '&');
+        };
+      
+
+      $.ajax({
+        url: path,
+        dataType: isXml ? "xml" : "json",
+        async: true,
+        success: function(res) {
+          // get the contents from search data
+          isfetched = true;
+          $('.popup').detach().appendTo('.header-inner');
+          var datas = isXml ? $("entry", res).map(function() {
+            return {
+              title: $("title", this).text(),
+              content: $("content",this).text(),
+              url: $("url" , this).text()
+            };
+          }).get() : res;
+          var input = document.getElementById(search_id);
+          var resultContent = document.getElementById(content_id);
+          var inputEventFunction = function() {
+            var searchText = input.value.trim().toLowerCase();
+            var keywords = searchText.split(/[\s\-]+/);
+            if (keywords.length > 1) {
+              keywords.push(searchText);
+            }
+            var resultItems = [];
+            if (searchText.length > 0) {
+              // perform local searching
+              datas.forEach(function(data) {
+                var isMatch = false;
+                var hitCount = 0;
+                var searchTextCount = 0;
+                var title = data.title.trim();
+                var titleInLowerCase = title.toLowerCase();
+                var content = data.content.trim().replace(/<[^>]+>/g,"");
+                
+                content = unescapeHtml(content);
+                
+                var contentInLowerCase = content.toLowerCase();
+                var articleUrl = decodeURIComponent(data.url).replace(/\/{2,}/g, '/');
+                var indexOfTitle = [];
+                var indexOfContent = [];
+                // only match articles with not empty titles
+                if(title != '') {
+                  keywords.forEach(function(keyword) {
+                    function getIndexByWord(word, text, caseSensitive) {
+                      var wordLen = word.length;
+                      if (wordLen === 0) {
+                        return [];
+                      }
+                      var startPosition = 0, position = [], index = [];
+                      if (!caseSensitive) {
+                        text = text.toLowerCase();
+                        word = word.toLowerCase();
+                      }
+                      while ((position = text.indexOf(word, startPosition)) > -1) {
+                        index.push({position: position, word: word});
+                        startPosition = position + wordLen;
+                      }
+                      return index;
+                    }
+
+                    indexOfTitle = indexOfTitle.concat(getIndexByWord(keyword, titleInLowerCase, false));
+                    indexOfContent = indexOfContent.concat(getIndexByWord(keyword, contentInLowerCase, false));
+                  });
+                  if (indexOfTitle.length > 0 || indexOfContent.length > 0) {
+                    isMatch = true;
+                    hitCount = indexOfTitle.length + indexOfContent.length;
+                  }
+                }
+
+                // show search results
+
+                if (isMatch) {
+                  // sort index by position of keyword
+
+                  [indexOfTitle, indexOfContent].forEach(function (index) {
+                    index.sort(function (itemLeft, itemRight) {
+                      if (itemRight.position !== itemLeft.position) {
+                        return itemRight.position - itemLeft.position;
+                      } else {
+                        return itemLeft.word.length - itemRight.word.length;
+                      }
+                    });
+                  });
+
+                  // merge hits into slices
+
+                  function mergeIntoSlice(text, start, end, index) {
+                    var item = index[index.length - 1];
+                    var position = item.position;
+                    var word = item.word;
+                    var hits = [];
+                    var searchTextCountInSlice = 0;
+                    while (position + word.length <= end && index.length != 0) {
+                      if (word === searchText) {
+                        searchTextCountInSlice++;
+                      }
+                      hits.push({position: position, length: word.length});
+                      var wordEnd = position + word.length;
+
+                      // move to next position of hit
+
+                      index.pop();
+                      while (index.length != 0) {
+                        item = index[index.length - 1];
+                        position = item.position;
+                        word = item.word;
+                        if (wordEnd > position) {
+                          index.pop();
+                        } else {
+                          break;
+                        }
+                      }
+                    }
+                    searchTextCount += searchTextCountInSlice;
+                    return {
+                      hits: hits,
+                      start: start,
+                      end: end,
+                      searchTextCount: searchTextCountInSlice
+                    };
+                  }
+
+                  var slicesOfTitle = [];
+                  if (indexOfTitle.length != 0) {
+                    slicesOfTitle.push(mergeIntoSlice(title, 0, title.length, indexOfTitle));
+                  }
+
+                  var slicesOfContent = [];
+                  while (indexOfContent.length != 0) {
+                    var item = indexOfContent[indexOfContent.length - 1];
+                    var position = item.position;
+                    var word = item.word;
+                    // cut out 100 characters
+                    var start = position - 20;
+                    var end = position + 80;
+                    if(start < 0){
+                      start = 0;
+                    }
+                    if (end < position + word.length) {
+                      end = position + word.length;
+                    }
+                    if(end > content.length){
+                      end = content.length;
+                    }
+                    slicesOfContent.push(mergeIntoSlice(content, start, end, indexOfContent));
+                  }
+
+                  // sort slices in content by search text's count and hits' count
+
+                  slicesOfContent.sort(function (sliceLeft, sliceRight) {
+                    if (sliceLeft.searchTextCount !== sliceRight.searchTextCount) {
+                      return sliceRight.searchTextCount - sliceLeft.searchTextCount;
+                    } else if (sliceLeft.hits.length !== sliceRight.hits.length) {
+                      return sliceRight.hits.length - sliceLeft.hits.length;
+                    } else {
+                      return sliceLeft.start - sliceRight.start;
+                    }
+                  });
+
+                  // select top N slices in content
+
+                  var upperBound = parseInt('1');
+                  if (upperBound >= 0) {
+                    slicesOfContent = slicesOfContent.slice(0, upperBound);
+                  }
+
+                  // highlight title and content
+
+                  function highlightKeyword(text, slice) {
+                    var result = '';
+                    var prevEnd = slice.start;
+                    slice.hits.forEach(function (hit) {
+                      result += text.substring(prevEnd, hit.position);
+                      var end = hit.position + hit.length;
+                      result += '<b class="search-keyword">' + text.substring(hit.position, end) + '</b>';
+                      prevEnd = end;
+                    });
+                    result += text.substring(prevEnd, slice.end);
+                    return result;
+                  }
+
+                  var resultItem = '';
+
+                  if (slicesOfTitle.length != 0) {
+                    resultItem += "<li><a href='" + articleUrl + "' class='search-result-title'>" + highlightKeyword(title, slicesOfTitle[0]) + "</a>";
+                  } else {
+                    resultItem += "<li><a href='" + articleUrl + "' class='search-result-title'>" + title + "</a>";
+                  }
+
+                  slicesOfContent.forEach(function (slice) {
+                    resultItem += "<a href='" + articleUrl + "'>" +
+                      "<p class=\"search-result\">" + highlightKeyword(content, slice) +
+                      "...</p>" + "</a>";
+                  });
+
+                  resultItem += "</li>";
+                  resultItems.push({
+                    item: resultItem,
+                    searchTextCount: searchTextCount,
+                    hitCount: hitCount,
+                    id: resultItems.length
+                  });
+                }
+              })
+            };
+            if (keywords.length === 1 && keywords[0] === "") {
+              resultContent.innerHTML = '<div id="no-result"><i class="fa fa-search fa-5x"></i></div>'
+            } else if (resultItems.length === 0) {
+              resultContent.innerHTML = '<div id="no-result"><i class="fa fa-frown-o fa-5x"></i></div>'
+            } else {
+              resultItems.sort(function (resultLeft, resultRight) {
+                if (resultLeft.searchTextCount !== resultRight.searchTextCount) {
+                  return resultRight.searchTextCount - resultLeft.searchTextCount;
+                } else if (resultLeft.hitCount !== resultRight.hitCount) {
+                  return resultRight.hitCount - resultLeft.hitCount;
+                } else {
+                  return resultRight.id - resultLeft.id;
+                }
+              });
+              var searchResultList = '<ul class=\"search-result-list\">';
+              resultItems.forEach(function (result) {
+                searchResultList += result.item;
+              })
+              searchResultList += "</ul>";
+              resultContent.innerHTML = searchResultList;
+            }
+          }
+
+          if ('auto' === 'auto') {
+            input.addEventListener('input', inputEventFunction);
+          } else {
+            $('.search-icon').click(inputEventFunction);
+            input.addEventListener('keypress', function (event) {
+              if (event.keyCode === 13) {
+                inputEventFunction();
+              }
+            });
+          }
+
+          // remove loading animation
+          $(".local-search-pop-overlay").remove();
+          $('body').css('overflow', '');
+
+          proceedsearch();
+        }
+      });
+    }
+
+    // handle and trigger popup window;
+    $('.popup-trigger').click(function(e) {
+      e.stopPropagation();
+      if (isfetched === false) {
+        searchFunc(path, 'local-search-input', 'local-search-result');
+      } else {
+        proceedsearch();
+      };
+    });
+
+    $('.popup-btn-close').click(onPopupClose);
+    $('.popup').click(function(e){
+      e.stopPropagation();
+    });
+    $(document).on('keyup', function (event) {
+      var shouldDismissSearchPopup = event.which === 27 &&
+        $('.search-popup').is(':visible');
+      if (shouldDismissSearchPopup) {
+        onPopupClose();
+      }
+    });
+  </script>
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+
+  
+  <script>
+    (function(){
+      var bp = document.createElement('script');
+      var curProtocol = window.location.protocol.split(':')[0];
+      if (curProtocol === 'https') {
+        bp.src = 'https://zz.bdstatic.com/linksubmit/push.js'; 
+      }
+      else {
+        bp.src = 'http://push.zhanzhang.baidu.com/push.js';
+      }
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(bp, s);
+    })();
+  </script>
+
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>
