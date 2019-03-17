@@ -96,16 +96,18 @@
 
 
 
-  <meta name="description" content="You Never Know Who You Are">
-<meta property="og:type" content="website">
-<meta property="og:title" content="XTong notes">
-<meta property="og:url" content="https://tongfan.xyz/tags/next/index.html">
+  <meta name="description" content="摘要：HBASE中存在一张隐含的meta表，隐含是因为其重要，可以说这张表示HBASE的管家表，不管是存数据还是查数据，这张表的作用都是十分重要的，本片文章详细对meta表进行说明。">
+<meta name="keywords" content="Hbase,meta">
+<meta property="og:type" content="article">
+<meta property="og:title" content="HBASE中的meta表">
+<meta property="og:url" content="https://tongfan.xyz/2018/03/10/hbase中的meta表/index.html">
 <meta property="og:site_name" content="XTong notes">
-<meta property="og:description" content="You Never Know Who You Are">
+<meta property="og:description" content="摘要：HBASE中存在一张隐含的meta表，隐含是因为其重要，可以说这张表示HBASE的管家表，不管是存数据还是查数据，这张表的作用都是十分重要的，本片文章详细对meta表进行说明。">
 <meta property="og:locale" content="zh-CN">
+<meta property="og:updated_time" content="2019-03-10T08:14:32.490Z">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:title" content="XTong notes">
-<meta name="twitter:description" content="You Never Know Who You Are">
+<meta name="twitter:title" content="HBASE中的meta表">
+<meta name="twitter:description" content="摘要：HBASE中存在一张隐含的meta表，隐含是因为其重要，可以说这张表示HBASE的管家表，不管是存数据还是查数据，这张表的作用都是十分重要的，本片文章详细对meta表进行说明。">
 
 
 
@@ -114,7 +116,7 @@
 
 
 
-  <link rel="canonical" href="https://tongfan.xyz/tags/next/">
+  <link rel="canonical" href="https://tongfan.xyz/2018/03/10/hbase中的meta表/">
 
 
 
@@ -124,7 +126,7 @@
   };
 </script>
 
-  <title>标签: next | XTong notes</title>
+  <title>HBASE中的meta表 | XTong notes</title>
   
 
 
@@ -172,7 +174,7 @@
     
   
 
-  <div class="container sidebar-position-left ">
+  <div class="container sidebar-position-left page-post-detail">
     <div class="headband"></div>
 
     <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
@@ -252,7 +254,7 @@
         
         
           
-          <li class="menu-item menu-item-tags menu-item-active">
+          <li class="menu-item menu-item-tags">
 
     
     
@@ -382,85 +384,268 @@
           
             
 
-    
-    
-      
-      
-    
-      
-      
-    
-      
-      
-    
-      
-      
-    
-      
-      
-    
-      
-      
-    
-    
-
-  
-
-
           
           <div id="content" class="content">
             
 
-  
-  
-  
-  <div class="post-block tag">
+  <div id="posts" class="posts-expand">
+    
 
-    <div id="posts" class="posts-collapse">
-      <div class="collection-title">
-        <h2>next<small>标签</small>
-        </h2>
-      </div>
+  
 
-      
-        
+  
+  
+  
+
+  
 
   <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
-    <header class="post-header">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://tongfan.xyz/2018/03/10/hbase中的meta表/">
 
-      <h3 class="post-title">
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="XiaoTong Wang">
+      <meta itemprop="description" content="You Never Know Who You Are">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="XTong notes">
+    </span>
+
+    
+      <header class="post-header">
+
         
-          <a class="post-title-link" href="/2015/03/23/Next主题内置标签/" itemprop="url">
-            
-              <span itemprop="name">Next主题内置标签</span>
-            
-          </a>
         
-      </h3>
+          <h2 class="post-title" itemprop="name headline">HBASE中的meta表
 
-      <div class="post-meta">
-        <time class="post-time" itemprop="dateCreated" datetime="2015-03-23T19:23:49+08:00" content="2015-03-23">
-          03-23
-        </time>
-      </div>
+              
+            
+          </h2>
+        
 
-    </header>
-  </article>
+        <div class="post-meta">
+          <span class="post-time">
 
+            
+            
+            
+
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+
+              
+                
+              
+
+              <time title="创建时间：2018-03-10 15:05:58" itemprop="dateCreated datePublished" datetime="2018-03-10T15:05:58+08:00">2018-03-10</time>
+            
+
+            
+              
+
+              
+                
+                <span class="post-meta-divider">|</span>
+                
+
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-calendar-check-o"></i>
+                </span>
+                
+                  <span class="post-meta-item-text">更新于</span>
+                
+                <time title="修改时间：2019-03-10 16:14:32" itemprop="dateModified" datetime="2019-03-10T16:14:32+08:00">2019-03-10</time>
+              
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing"><a href="/categories/Hbase/" itemprop="url" rel="index"><span itemprop="name">Hbase</span></a></span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+            
+              
+              <span class="post-comments-count">
+                <span class="post-meta-divider">|</span>
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-comment-o"></i>
+                </span>
+            
+                <span class="post-meta-item-text">评论数：</span>
+                <a href="/2018/03/10/hbase中的meta表/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count valine-comment-count" data-xid="/2018/03/10/hbase中的meta表/" itemprop="commentCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p><strong>摘要</strong>：HBASE中存在一张隐含的meta表，隐含是因为其重要，可以说这张表示HBASE的管家表，不管是存数据还是查数据，这张表的作用都是十分重要的，本片文章详细对meta表进行说明。</p>
+<a id="more"></a>
+<h1 id="说明"><a href="#说明" class="headerlink" title="说明"></a>说明</h1><p>HBASE中的meta表，又称作catalog table，其作为HBASE中的table存储在寒色中，有人会问，如果这是一张存储在HBASE中的表，为什么执行list命令的时候，没有见过这张表呢？这里要进行说明一下，这张表是被HBASE shell 中的list命令排除了的，所以在list的时候，是没有显示的。</p>
+<p>其在HBASE中存储的全名问<code>hbase:meta</code>，hbase是namespace，meta为表名，之前其表名为<code>.MATE.</code>，这张表存储的内容为HBASE中所有的region的列表，同时这张表的位置（location）是存储在ZooKeeper中的。</p>
+<h1 id="结构"><a href="#结构" class="headerlink" title="结构"></a>结构</h1><p><code>hbase：meta</code>这张表的结构与一般hbase表并无区别，为rowkey和values（这是句废话），具体如下所示：</p>
+<p>rowkey格式</p>
+<ul>
+<li><code>[table],[region start key],[region id]</code></li>
+</ul>
+<p>value格式为：</p>
+<ul>
+<li><code>info:regioninfo</code>:序列化这个region的regioninfo的实例；</li>
+<li><code>info:server</code>：包含这个region的regionserver的端口；</li>
+<li><code>info:serverstartcode</code>：包含这个region的regionserver线程运行的开始时间</li>
+</ul>
+<p>当表进行split操作时，另外的两个列将会被创建，<code>info:splitA</code>和<code>info:splitB</code>，这两列表示两个自region，这两列的权值就是序列化的regioninfo实例，在region split操作完成之后，最终这些行将会被删除。</p>
+<h1 id="regioninfo"><a href="#regioninfo" class="headerlink" title="regioninfo"></a>regioninfo</h1><p>空key被用来表示table的起止，如果一个region中的startKey为空，那么这个region为table中的第一个region；如果一个region的startkey、endKey都为空，那么这个table中只有这一个region。</p>
+<p>这里说明一下regioninfo这个实例，大家说这里边都存储着些什么东西，这里进行说明：</p>
+<ul>
+<li>tableName：表名</li>
+<li>startKey：region的startKey</li>
+<li>regionId：该region创建的时候的timestamp</li>
+<li>replicaId：从0开始的，用以区分同个region分布在不同server上的replica；相同的region range可以返回多个位置；</li>
+<li>encodedName：MD5对regionName的编码；</li>
+</ul>
+<p>还有一些其他的属性：</p>
+<ul>
+<li>endKey：region的endKey（独占的）</li>
+<li>split：标识region是否发生了split操作；</li>
+<li>offline：标识region是否offline；</li>
+</ul>
+<p>regionInfo在hbase 3.0中将有RegionInfoBuilder来进行创建，这个api会废弃；在hbase0.98和之前的版本中，表的region列表能够全部覆盖全部的keyspace，同时在任何时间点，一个rowkey总是属于一个region，定位在一个特定的服务器；在0.99之后的版本，一个region可以有多个示例（replicas），这样一个row range能够与多个regioninfo保持一致；多个regioninfo除了replicaId之外，其他字段都是共享的，replicaId默认为0，这个与之前的单regioninfo的版本是兼容的。</p>
+<h1 id="开始序列化"><a href="#开始序列化" class="headerlink" title="开始序列化"></a>开始序列化</h1><p>首先在zk中查找<code>hbase:meta</code>，其次，对表中的server和startcode进行更新；</p>
+<p>更多的信息参考<a href>hbase中的region和regionserver</a></p>
+<h1 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h1><p>每个数据库都有系统维护的表，就和pg中的用户表、catalog表一样，hbase中也维护着自己的meta表，不过是hbase的功能配置、使用方式没有传统数据库的强大功能和管理（这和产品的定位的有关），所以其系统表稍微少一点，更多hbase中的细节，后续博客会介绍。</p>
+<div class="note primary">
+            <h4 id="本文作者：tongtong"><a href="#本文作者：tongtong" class="headerlink" title="本文作者：tongtong"></a>本文作者：tongtong</h4><h4 id="本文链接：https-stongtong-github-io"><a href="#本文链接：https-stongtong-github-io" class="headerlink" title="本文链接：https://stongtong.github.io/"></a>本文链接：<a href="https://stongtong.github.io/">https://stongtong.github.io/</a></h4><h4 id="版权申明：网站内容为tongtong所有，转载请注明出处。"><a href="#版权申明：网站内容为tongtong所有，转载请注明出处。" class="headerlink" title="版权申明：网站内容为tongtong所有，转载请注明出处。"></a>版权申明：网站内容为tongtong所有，转载请注明出处。</h4>
+          </div>
 
       
     </div>
 
+    
+
+    
+    
+    
+
+    
+
+    
+      
+    
+    
+
+    
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/Hbase/" rel="tag"># Hbase</a>
+          
+            <a href="/tags/meta/" rel="tag"># meta</a>
+          
+        </div>
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2018/01/14/spark中broadcast原理/" rel="next" title="spark中的Broadcast原理">
+                <i class="fa fa-chevron-left"></i> spark中的Broadcast原理
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2018/08/29/hbase的spark接口/" rel="prev" title="spark接入HBASE">
+                spark接入HBASE <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
   </div>
   
   
   
+  </article>
 
-  
+
+  </div>
 
 
           </div>
           
+
+  
+    <div class="comments" id="comments">
+    </div>
+
+  
+
+
 
         </div>
         
@@ -481,8 +666,17 @@
       
 
       
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            站点概览
+          </li>
+        </ul>
+      
 
-      <div class="site-overview-wrap sidebar-panel sidebar-panel-active">
+      <div class="site-overview-wrap sidebar-panel">
         <div class="site-overview">
           <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
             
@@ -644,6 +838,23 @@
       </div>
 
       
+      <!--noindex-->
+        <div class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+            
+            
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#说明"><span class="nav-number">1.</span> <span class="nav-text">说明</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#结构"><span class="nav-number">2.</span> <span class="nav-text">结构</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#regioninfo"><span class="nav-number">3.</span> <span class="nav-text">regioninfo</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#开始序列化"><span class="nav-number">4.</span> <span class="nav-text">开始序列化</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#总结"><span class="nav-number">5.</span> <span class="nav-text">总结</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#本文作者：tongtong"><span class="nav-number">5.0.0.1.</span> <span class="nav-text">本文作者：tongtong</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#本文链接：https-stongtong-github-io"><span class="nav-number">5.0.0.2.</span> <span class="nav-text">本文链接：https://stongtong.github.io/</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#版权申明：网站内容为tongtong所有，转载请注明出处。"><span class="nav-number">5.0.0.3.</span> <span class="nav-text">版权申明：网站内容为tongtong所有，转载请注明出处。</span></a></li></ol></li></ol></div>
+            
+
+          </div>
+        </div>
+      <!--/noindex-->
+      
 
       
 
@@ -782,6 +993,10 @@
 
 
   
+  <script src="/js/src/scrollspy.js?v=7.0.0"></script>
+<script src="/js/src/post-details.js?v=7.0.0"></script>
+
+
 
   
 
@@ -821,6 +1036,8 @@
 
 
 
+
+  
 
 
   

@@ -99,7 +99,7 @@
   <meta name="description" content="You Never Know Who You Are">
 <meta property="og:type" content="website">
 <meta property="og:title" content="XTong notes">
-<meta property="og:url" content="https://tongfan.xyz/categories/Hbase/index.html">
+<meta property="og:url" content="https://tongfan.xyz/categories/hbase/index.html">
 <meta property="og:site_name" content="XTong notes">
 <meta property="og:description" content="You Never Know Who You Are">
 <meta property="og:locale" content="zh-CN">
@@ -114,7 +114,7 @@
 
 
 
-  <link rel="canonical" href="https://tongfan.xyz/categories/Hbase/">
+  <link rel="canonical" href="https://tongfan.xyz/categories/hbase/">
 
 
 
@@ -124,7 +124,7 @@
   };
 </script>
 
-  <title>分类: Hbase | XTong notes</title>
+  <title>分类: hbase | XTong notes</title>
   
 
 
@@ -264,7 +264,7 @@
       
     
 
-    <a href="/tags/" rel="section"><i class="menu-item-icon fa fa-fw fa-tags"></i> <br>标签<span class="badge">10</span></a>
+    <a href="/tags/" rel="section"><i class="menu-item-icon fa fa-fw fa-tags"></i> <br>标签<span class="badge">13</span></a>
 
   </li>
         
@@ -283,7 +283,7 @@
       
     
 
-    <a href="/categories/" rel="section"><i class="menu-item-icon fa fa-fw fa-th"></i> <br>分类<span class="badge">5</span></a>
+    <a href="/categories/" rel="section"><i class="menu-item-icon fa fa-fw fa-th"></i> <br>分类<span class="badge">6</span></a>
 
   </li>
         
@@ -302,7 +302,7 @@
       
     
 
-    <a href="/archives/" rel="section"><i class="menu-item-icon fa fa-fw fa-archive"></i> <br>归档<span class="badge">8</span></a>
+    <a href="/archives/" rel="section"><i class="menu-item-icon fa fa-fw fa-archive"></i> <br>归档<span class="badge">10</span></a>
 
   </li>
         
@@ -418,7 +418,7 @@
 
     <div id="posts" class="posts-collapse">
       <div class="collection-title">
-        <h2>Hbase<small>分类</small>
+        <h2>hbase<small>分类</small>
         </h2>
       </div>
 
@@ -430,43 +430,17 @@
 
       <h3 class="post-title">
         
-          <a class="post-title-link" href="/2019/02/17/HBASE中的数据刷写/" itemprop="url">
+          <a class="post-title-link" href="/2018/08/29/hbase的spark接口/" itemprop="url">
             
-              <span itemprop="name">HBASE中的数据刷写</span>
-            
-          </a>
-        
-      </h3>
-
-      <div class="post-meta">
-        <time class="post-time" itemprop="dateCreated" datetime="2019-02-17T19:27:58+08:00" content="2019-02-17">
-          02-17
-        </time>
-      </div>
-
-    </header>
-  </article>
-
-
-      
-        
-
-  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
-    <header class="post-header">
-
-      <h3 class="post-title">
-        
-          <a class="post-title-link" href="/2017/04/05/hbase01-LSM Tree/" itemprop="url">
-            
-              <span itemprop="name">HBASE中LSM Tree</span>
+              <span itemprop="name">spark接入HBASE</span>
             
           </a>
         
       </h3>
 
       <div class="post-meta">
-        <time class="post-time" itemprop="dateCreated" datetime="2017-04-05T10:30:44+08:00" content="2017-04-05">
-          04-05
+        <time class="post-time" itemprop="dateCreated" datetime="2018-08-29T16:52:43+08:00" content="2018-08-29">
+          08-29
         </time>
       </div>
 
@@ -526,7 +500,7 @@
                 
                   <a href="/archives/">
                 
-                    <span class="site-state-item-count">8</span>
+                    <span class="site-state-item-count">10</span>
                     <span class="site-state-item-name">日志</span>
                   </a>
                 </div>
@@ -549,7 +523,9 @@
                     
                       
                     
-                    <span class="site-state-item-count">5</span>
+                      
+                    
+                    <span class="site-state-item-count">6</span>
                     <span class="site-state-item-name">分类</span>
                   </a>
                 </div>
@@ -582,7 +558,13 @@
                     
                       
                     
-                    <span class="site-state-item-count">10</span>
+                      
+                    
+                      
+                    
+                      
+                    
+                    <span class="site-state-item-count">13</span>
                     <span class="site-state-item-name">标签</span>
                   </a>
                 </div>
@@ -1149,6 +1131,83 @@
           // remove loading animation
           $(".local-search-pop-overlay").remove();
           $('body').css('overflow', '');
+
+          proceedsearch();
+        }
+      });
+    }
+
+    // handle and trigger popup window;
+    $('.popup-trigger').click(function(e) {
+      e.stopPropagation();
+      if (isfetched === false) {
+        searchFunc(path, 'local-search-input', 'local-search-result');
+      } else {
+        proceedsearch();
+      };
+    });
+
+    $('.popup-btn-close').click(onPopupClose);
+    $('.popup').click(function(e){
+      e.stopPropagation();
+    });
+    $(document).on('keyup', function (event) {
+      var shouldDismissSearchPopup = event.which === 27 &&
+        $('.search-popup').is(':visible');
+      if (shouldDismissSearchPopup) {
+        onPopupClose();
+      }
+    });
+  </script>
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+
+  
+  <script>
+    (function(){
+      var bp = document.createElement('script');
+      var curProtocol = window.location.protocol.split(':')[0];
+      if (curProtocol === 'https') {
+        bp.src = 'https://zz.bdstatic.com/linksubmit/push.js'; 
+      }
+      else {
+        bp.src = 'http://push.zhanzhang.baidu.com/push.js';
+      }
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(bp, s);
+    })();
+  </script>
+
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>
+body').css('overflow', '');
 
           proceedsearch();
         }
