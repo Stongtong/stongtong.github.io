@@ -96,18 +96,18 @@
 
 
 
-  <meta name="description" content="摘要：**本篇文章对最近在帮同事搭建hadoop集群以及在调试升级部门集群时遇到的问题进行记录。">
+  <meta name="description" content="摘要：本篇文章对最近在帮同事搭建hadoop集群以及在调试升级部门集群时遇到的问题进行记录。">
 <meta name="keywords" content="hadoop">
 <meta property="og:type" content="article">
 <meta property="og:title" content="Hadoop集群中遇到的一些问题">
 <meta property="og:url" content="https://tongfan.xyz/2018/07/15/hadoop安装问题记录（一）/index.html">
 <meta property="og:site_name" content="XTong notes">
-<meta property="og:description" content="摘要：**本篇文章对最近在帮同事搭建hadoop集群以及在调试升级部门集群时遇到的问题进行记录。">
+<meta property="og:description" content="摘要：本篇文章对最近在帮同事搭建hadoop集群以及在调试升级部门集群时遇到的问题进行记录。">
 <meta property="og:locale" content="zh-CN">
-<meta property="og:updated_time" content="2019-03-19T14:04:52.064Z">
+<meta property="og:updated_time" content="2019-03-19T14:17:00.644Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="Hadoop集群中遇到的一些问题">
-<meta name="twitter:description" content="摘要：**本篇文章对最近在帮同事搭建hadoop集群以及在调试升级部门集群时遇到的问题进行记录。">
+<meta name="twitter:description" content="摘要：本篇文章对最近在帮同事搭建hadoop集群以及在调试升级部门集群时遇到的问题进行记录。">
 
 
 
@@ -266,7 +266,7 @@
       
     
 
-    <a href="/tags/" rel="section"><i class="menu-item-icon fa fa-fw fa-tags"></i> <br>标签<span class="badge">14</span></a>
+    <a href="/tags/" rel="section"><i class="menu-item-icon fa fa-fw fa-tags"></i> <br>标签<span class="badge">15</span></a>
 
   </li>
         
@@ -407,7 +407,7 @@
     <link itemprop="mainEntityOfPage" href="https://tongfan.xyz/2018/07/15/hadoop安装问题记录（一）/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="XiaoTong Wang">
+      <meta itemprop="name" content="Auggie Wang">
       <meta itemprop="description" content="You Never Know Who You Are">
       <meta itemprop="image" content="/images/avatar.gif">
     </span>
@@ -464,7 +464,7 @@
                 
                   <span class="post-meta-item-text">更新于</span>
                 
-                <time title="修改时间：2019-03-19 22:04:52" itemprop="dateModified" datetime="2019-03-19T22:04:52+08:00">2019-03-19</time>
+                <time title="修改时间：2019-03-19 22:17:00" itemprop="dateModified" datetime="2019-03-19T22:17:00+08:00">2019-03-19</time>
               
             
           </span>
@@ -529,7 +529,7 @@
       
 
       
-        <p>摘要：**本篇文章对最近在帮同事搭建hadoop集群以及在调试升级部门集群时遇到的问题进行记录。</p>
+        <p><strong>摘要：</strong>本篇文章对最近在帮同事搭建hadoop集群以及在调试升级部门集群时遇到的问题进行记录。</p>
 <a id="more"></a>
 <p><strong>问题一</strong>：在机器之间配置了ssh免密登录之后，启动集群还是需要输入密码</p>
 <p>这个问题很困惑，因为机器之间都是ssh进行通信。其他机器ssh配置互通互信都没有问题，但是在集群启动的时候还是需要进行密码的输入，有点想不通，在进行ssh 本地ip（localhost或者127.0.0.1）的时候是也需要输入密码，这样的话就有点明白了，原因就是本地ip和配置的本机的集群ip没有对应起来，导致ssh不识别的问题，解决方式就是本地ip，ssh 本地ip，可以很快解决这个问题。当然了也可以通过配置hosts文件进行解决。</p>
@@ -645,9 +645,9 @@
         <div class="site-overview">
           <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
             
-              <img class="site-author-image" itemprop="image" src="/images/avatar.gif" alt="XiaoTong Wang">
+              <img class="site-author-image" itemprop="image" src="/images/avatar.gif" alt="Auggie Wang">
             
-              <p class="site-author-name" itemprop="name">XiaoTong Wang</p>
+              <p class="site-author-name" itemprop="name">Auggie Wang</p>
               <p class="site-description motion-element" itemprop="description">You Never Know Who You Are</p>
           </div>
 
@@ -726,7 +726,9 @@
                     
                       
                     
-                    <span class="site-state-item-count">14</span>
+                      
+                    
+                    <span class="site-state-item-count">15</span>
                     <span class="site-state-item-name">标签</span>
                   </a>
                 </div>
@@ -824,7 +826,7 @@
   <span class="with-love" id="animate">
     <i class="fa fa-user"></i>
   </span>
-  <span class="author" itemprop="copyrightHolder">XiaoTong Wang</span>
+  <span class="author" itemprop="copyrightHolder">Auggie Wang</span>
 
   
 
