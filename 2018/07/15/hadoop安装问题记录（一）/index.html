@@ -96,20 +96,18 @@
 
 
 
-  <meta name="description" content="本次搭建主要使用hexo，安装主题为next主题，包括站内搜索、站点、RSS、还有统计和评论系统，并实现 blog自动发布完成。">
-<meta name="keywords" content="github,person">
+  <meta name="description" content="摘要：**本篇文章对最近在帮同事搭建hadoop集群以及在调试升级部门集群时遇到的问题进行记录。">
+<meta name="keywords" content="hadoop">
 <meta property="og:type" content="article">
-<meta property="og:title" content="github搭建各站记录">
-<meta property="og:url" content="https://tongfan.xyz/2015/08/29/GitHub搭建个人网站记录/index.html">
+<meta property="og:title" content="Hadoop集群中遇到的一些问题">
+<meta property="og:url" content="https://tongfan.xyz/2018/07/15/hadoop安装问题记录（一）/index.html">
 <meta property="og:site_name" content="XTong notes">
-<meta property="og:description" content="本次搭建主要使用hexo，安装主题为next主题，包括站内搜索、站点、RSS、还有统计和评论系统，并实现 blog自动发布完成。">
+<meta property="og:description" content="摘要：**本篇文章对最近在帮同事搭建hadoop集群以及在调试升级部门集群时遇到的问题进行记录。">
 <meta property="og:locale" content="zh-CN">
-<meta property="og:image" content="http://i.imgur.com/t9Aex4E.png">
-<meta property="og:updated_time" content="2019-02-20T14:26:28.278Z">
+<meta property="og:updated_time" content="2019-03-19T14:04:52.064Z">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:title" content="github搭建各站记录">
-<meta name="twitter:description" content="本次搭建主要使用hexo，安装主题为next主题，包括站内搜索、站点、RSS、还有统计和评论系统，并实现 blog自动发布完成。">
-<meta name="twitter:image" content="http://i.imgur.com/t9Aex4E.png">
+<meta name="twitter:title" content="Hadoop集群中遇到的一些问题">
+<meta name="twitter:description" content="摘要：**本篇文章对最近在帮同事搭建hadoop集群以及在调试升级部门集群时遇到的问题进行记录。">
 
 
 
@@ -118,7 +116,7 @@
 
 
 
-  <link rel="canonical" href="https://tongfan.xyz/2015/08/29/GitHub搭建个人网站记录/">
+  <link rel="canonical" href="https://tongfan.xyz/2018/07/15/hadoop安装问题记录（一）/">
 
 
 
@@ -128,7 +126,7 @@
   };
 </script>
 
-  <title>github搭建各站记录 | XTong notes</title>
+  <title>Hadoop集群中遇到的一些问题 | XTong notes</title>
   
 
 
@@ -406,7 +404,7 @@
   
   
   <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="https://tongfan.xyz/2015/08/29/GitHub搭建个人网站记录/">
+    <link itemprop="mainEntityOfPage" href="https://tongfan.xyz/2018/07/15/hadoop安装问题记录（一）/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="name" content="XiaoTong Wang">
@@ -423,7 +421,7 @@
 
         
         
-          <h2 class="post-title" itemprop="name headline">github搭建各站记录
+          <h2 class="post-title" itemprop="name headline">Hadoop集群中遇到的一些问题
 
               
             
@@ -449,7 +447,7 @@
                 
               
 
-              <time title="创建时间：2015-08-29 16:52:43" itemprop="dateCreated datePublished" datetime="2015-08-29T16:52:43+08:00">2015-08-29</time>
+              <time title="创建时间：2018-07-15 10:30:44" itemprop="dateCreated datePublished" datetime="2018-07-15T10:30:44+08:00">2018-07-15</time>
             
 
             
@@ -466,7 +464,7 @@
                 
                   <span class="post-meta-item-text">更新于</span>
                 
-                <time title="修改时间：2019-02-20 22:26:28" itemprop="dateModified" datetime="2019-02-20T22:26:28+08:00">2019-02-20</time>
+                <time title="修改时间：2019-03-19 22:04:52" itemprop="dateModified" datetime="2019-03-19T22:04:52+08:00">2019-03-19</time>
               
             
           </span>
@@ -483,7 +481,7 @@
                 <span class="post-meta-item-text">分类于</span>
               
               
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing"><a href="/categories/next/" itemprop="url" rel="index"><span itemprop="name">next</span></a></span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing"><a href="/categories/Hadoop/" itemprop="url" rel="index"><span itemprop="name">Hadoop</span></a></span>
 
                 
                 
@@ -502,8 +500,8 @@
                 </span>
             
                 <span class="post-meta-item-text">评论数：</span>
-                <a href="/2015/08/29/GitHub搭建个人网站记录/#comments" itemprop="discussionUrl">
-                  <span class="post-comments-count valine-comment-count" data-xid="/2015/08/29/GitHub搭建个人网站记录/" itemprop="commentCount"></span>
+                <a href="/2018/07/15/hadoop安装问题记录（一）/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count valine-comment-count" data-xid="/2018/07/15/hadoop安装问题记录（一）/" itemprop="commentCount"></span>
                 </a>
               </span>
             
@@ -531,46 +529,20 @@
       
 
       
-        <p>本次搭建主要使用hexo，安装主题为next主题，包括站内搜索、站点、RSS、还有统计和评论系统，并实现 blog自动发布完成。</p>
+        <p>摘要：**本篇文章对最近在帮同事搭建hadoop集群以及在调试升级部门集群时遇到的问题进行记录。</p>
 <a id="more"></a>
-<h1 id="主要步骤"><a href="#主要步骤" class="headerlink" title="主要步骤"></a>主要步骤</h1><p>1、下载node js和git，安装完成后，在node js中利用npm进行hexo的安装：</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">npm install -g hexo-cli</span><br></pre></td></tr></table></figure>
-<p>2、在指定目录下初始化hexo目录， </p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">hexo ini hexo</span><br><span class="line">cd hexo</span><br><span class="line">npm install</span><br></pre></td></tr></table></figure>
-<p>这里的目录名称为hexo,将以上软件安装好之后，将原hexo文件夹下的文件目录统一存放在新建的hexo文件下即可，基本的框架搭建完成。</p>
-<h1 id="主题配置"><a href="#主题配置" class="headerlink" title="主题配置"></a>主题配置</h1><p>1、设置语言配置，主要在主题的目录下，查看language目录的支持的语言，之前next主题的中文语言文件为zh-Hans，但现在改成了zh-CN，这个一定要注意，要不然配置不会生效。</p>
-<p>2、社交配置和支持的页面目录配置，这一部分主要是根据自己的需要 ，在主题配置文件中进行相应的指定，比较简单，需要说明的是，在指定图标的时候是在链接的后面用英文指定，next图标库支持600+图标这个能很好的满足；放开相关页面目录的配置，一定要新建目录页，比如categories，需要用<code>hexo new page</code>来创建这个页面，要不然会报错。</p>
-<h1 id="部署功能"><a href="#部署功能" class="headerlink" title="部署功能"></a>部署功能</h1><p>要将写好的文件进行部署，需要安装插件，安装步骤为</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">npm install hexo-deployer-git --save</span><br></pre></td></tr></table></figure>
-<p>安装完毕使用hexo d命令进行部署。</p>
-<h1 id="RSS功能和mapsite功能"><a href="#RSS功能和mapsite功能" class="headerlink" title="RSS功能和mapsite功能"></a>RSS功能和mapsite功能</h1><p>进行Rss功能扩展需要安装插件，</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">npm install hexo-generator-feed --save</span><br></pre></td></tr></table></figure>
-<p>安装完毕后，会在hexo目录中出现node_modules文件夹，然后需要在hexo配置文件和主题配置文件中进行配置如下：<br>1、hexo配置文件</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">feed:</span><br><span class="line">  type: atom</span><br><span class="line">  path: atom.xml</span><br><span class="line">  limit: 20</span><br><span class="line">  hub:</span><br></pre></td></tr></table></figure>
-<p>2、主题配置文件</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">rss: /atom.xml</span><br></pre></td></tr></table></figure>
-<p>然后重启博客，在生成文件时，就会产生atom.xml文件，显示安装成功。<br>安装百度map-site功能<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">npm install hexo-generator-baidu-mapsite --save</span><br></pre></td></tr></table></figure></p>
-<p>1、在hexo配置文件</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">baidusitemap:</span><br><span class="line">    path: baidusitemap.xml</span><br></pre></td></tr></table></figure>
-<p>2、在主题配置文件<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">sitemap: /baidusitemap.xml</span><br></pre></td></tr></table></figure></p>
-<p>重启博客后，点击查看。(npm install hexo-baidu-url-push –save)</p>
-<h1 id="自定义站点搜索"><a href="#自定义站点搜索" class="headerlink" title="自定义站点搜索"></a>自定义站点搜索</h1><p>安装插件<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">npm install hexo-generator-searchdb --save</span><br></pre></td></tr></table></figure></p>
-<p>1、在hexo配置文件<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">search:</span><br><span class="line">  path: search.xml</span><br><span class="line">  field: post</span><br><span class="line">  format: html</span><br><span class="line">  limit: 10000</span><br></pre></td></tr></table></figure></p>
-<p>2、在主题文件中配置<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">local_search:</span><br><span class="line">  enable: true</span><br></pre></td></tr></table></figure></p>
-<h1 id="配置分类和标签"><a href="#配置分类和标签" class="headerlink" title="配置分类和标签"></a>配置分类和标签</h1><p>next主题中的分类和标签要通过新建index文件来产生。具体操作如下<br>运行 hexo new page tags 命令后会产生 source/tags/index.md 这个文件，你要修改这个文件，在里面添加一句话type: “tags”。<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line">title: &quot;tags&quot;</span><br><span class="line">date: 2015-03-24 08:58:02</span><br></pre></td></tr></table></figure></p>
-<p>添加：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">type: &quot;tags&quot;</span><br></pre></td></tr></table></figure></p>
-<p>然后运行服务器即可访问tags页面了。</p>
-<p>在 2015-05-29 06:22:57，”Leon Lin” <a href="mailto:notifications@github.com">notifications@github.com</a> 写道：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">$ cd path/to/hexo</span><br><span class="line">$ hexo new page tags</span><br><span class="line">$ hexo new page categories</span><br><span class="line">$ vim source/tags/index.md</span><br><span class="line"></span><br><span class="line">add line: type: &quot;tags&quot;</span><br><span class="line"></span><br><span class="line">$ vim source/categories/index.md</span><br><span class="line"></span><br><span class="line">add line: type: &quot;categories&quot;</span><br><span class="line"></span><br><span class="line">$ hexo d -g</span><br></pre></td></tr></table></figure></p>
-<p>做完之後產生的 /tags/index.html 裡面沒有顯示出所用的tag…</p>
-<h1 id="valine评论"><a href="#valine评论" class="headerlink" title="valine评论"></a>valine评论</h1><p>next主题支持多说、友言、畅言、来必力等评论系统，这里说一下，多说已经与17年6月关闭了自己的评论系统，原因估计是不赚钱，友言的评论系统很是难用这里也不多说了，畅言系统要求必须要有国内的ICP备案号，这一点比较坑，自己搭个各站，还要去备案，太过复杂，这里就只剩下来必力了，不过这几种，我都有尝试，尝试下来感觉都不太好，前段时间看到了一个基于LeanCloud的全新的评论系统valine，总结一个词就是<strong><em>好用</em></strong>，所以这里极力推荐使用valine作为评论系统，具体配置也很简单，基本你看了主题的这部分配置项就会明白，和阅读统计基本上差不多。</p>
-<h1 id="添加阅读统计"><a href="#添加阅读统计" class="headerlink" title="添加阅读统计"></a>添加阅读统计</h1><p>在LeanCloud注册账号，创建应用并制定Counter，然后获取AppId和App key在主题配置文件中指定，需要注意的是，这里需要对创建的计数进行安全限制，相关操作hexo论坛有很多，这里不再说明。</p>
-<p>在leancloud上注册账号，本账号具体为<br><img src="http://i.imgur.com/t9Aex4E.png" alt></p>
-<p>然后新建一个应用，应用的名称可以随便选取，在该应用中新建一个class，class权限设置为最大，class名称为Counter，然后进入设置，可以获取ID和Key，</p>
-<p>获取之后，在主题配置文件中进行设定：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">leancloud_visitors:</span><br><span class="line">  enable: true</span><br><span class="line">  app_id: C5p</span><br><span class="line">  app_key: iD</span><br></pre></td></tr></table></figure></p>
-<p>重启blog即可。</p>
-<div class="note primary">
-            <h4 id="本文作者：tongtong"><a href="#本文作者：tongtong" class="headerlink" title="本文作者：tongtong"></a>本文作者：tongtong</h4><h4 id="本文链接：https-stongtong-github-io"><a href="#本文链接：https-stongtong-github-io" class="headerlink" title="本文链接：https://stongtong.github.io/"></a>本文链接：<a href="https://stongtong.github.io/">https://stongtong.github.io/</a></h4><h4 id="版权申明：网站内容为tongtong所有，转载请注明出处。"><a href="#版权申明：网站内容为tongtong所有，转载请注明出处。" class="headerlink" title="版权申明：网站内容为tongtong所有，转载请注明出处。"></a>版权申明：网站内容为tongtong所有，转载请注明出处。</h4>
-          </div>
+<p><strong>问题一</strong>：在机器之间配置了ssh免密登录之后，启动集群还是需要输入密码</p>
+<p>这个问题很困惑，因为机器之间都是ssh进行通信。其他机器ssh配置互通互信都没有问题，但是在集群启动的时候还是需要进行密码的输入，有点想不通，在进行ssh 本地ip（localhost或者127.0.0.1）的时候是也需要输入密码，这样的话就有点明白了，原因就是本地ip和配置的本机的集群ip没有对应起来，导致ssh不识别的问题，解决方式就是本地ip，ssh 本地ip，可以很快解决这个问题。当然了也可以通过配置hosts文件进行解决。</p>
+<p><strong>问题二</strong>：在三台机器启动之后（1 master + 2 slave），会出现两个slave交替运行，但是同时只有一个存活的节点</p>
+<p>这个问题有点搞笑，程序起起来以后，slave1和slave2来回的跳跃，但是集群中存活的节点只有一个，如果停止其中的一个节点，那就变成了另外一个永久活着，直觉告诉我肯定哪里的配置让集群不能分辨出两个slave节点了，结果是同时把hdfs的数据路径放在安装目录下（一口老血没忍住），造成了不同节点上“生成了”相同的数据节点标识，哈哈，这个问题很是致命，有时候很简单的一个就是让你束手无策，但是知道原理，一步一步排查，总能找到问题所在，问题解决了还是很高兴的。</p>
+<p><strong>问题三</strong>：在安装centos 7时，直接用刻盘软件刻好优盘，但是提示超时，这个也记录一下。</p>
+<p>这周部门集群系统升级，直接用软碟刻盘软件刻了一个优盘，在进行cent 7 安装的时候老是提示<code>centos dracut timeout</code>超时，然后就是直接进入命令行，不能进入到优盘的安装系统界面，从网上找到的解决方法，还是挺好用的，现记录一下，在进行安装系统选择的时候，直接选择<code>install centos 7</code>，然后根据提示 按e，进入系统安装编辑界面，将第一个的<code>inst.stage2=hd:LABEL=CentOS\x207\x20x86_64.check quiet</code>更改为<code>inst.stage2=hd:/dev/sdbX quiet</code>，然后Ctrl+x执行，能够解决优盘刻录安装不进入系统安装界面的问题。</p>
+<p><strong>问题四</strong>：对hdfs一系列问题的尝试，这个真是让人很是头疼的问题，现记录如下。</p>
+<p>经过反复的折腾，起始最终问题也很简单了，就是有人对集群的master的fsimage和editlog进行了删除，准确的说是格式化，我的天呢，来回折腾了几个回合才意识到做了什么，然后赶紧补救，结果就不多说了，这里记录一下这次事故中学到的东西。</p>
+<ol>
+<li>hdfs知识：hdfs在master节点format的时候，会生成原始的fsimage文件和editlog文件，并且在配置文件指定的master目录中生成本集群的cluster id和BP号，cluster id就是集群的唯一的标识，BP就是block pool，简单的理解就是DataNode上面存储数据的路径，master在启动时会将这两个东西分发到配置的各个slave节点上，如果是第一次启动，那么datanode节点会新建相关的路径以及用两个id初始化相关目录并在目录生成current，这都很自然……那么问题来了，在master重新format之后生成新的id，如果原来DataNode上面在原来路径上已经生成了相关文件，那么数据节点就挂不上了，现在有两种方式：（1）如果是新装的集群，把原来目录删了重建这时候还可以；（2）如果集群原来的DataNode上有数据，这个时候就需要对信息进行修改了，最方便的做法是在原来的DataNode节点上找到原来集群的两个id，直接修改现在master节点新生成的id至原来的id，这个时候你启动集群，会发现节点都挂上去了，数据也显示正常了。</li>
+<li>解决问题的方法：碰到比较棘手的问题时，除了检测一下常见的问题，比如ip配置、硬盘的挂载、网络、基础库的配置外，最为主要的还是针对出现的问题，从组件的原理层面去深入的分析，一步一步的去定位，所以了解一个组件的运行原理很是重要，深入了解及其重要，不仅是在故障恢复，在平时的使用过程中作用会更大，最后说一句，<strong>面对任何一个问题，不论难易，都要心怀敬畏，认真对待</strong>。</li>
+</ol>
 
       
     </div>
@@ -594,9 +566,7 @@
       
         <div class="post-tags">
           
-            <a href="/tags/github/" rel="tag"># github</a>
-          
-            <a href="/tags/person/" rel="tag"># person</a>
+            <a href="/tags/hadoop/" rel="tag"># hadoop</a>
           
         </div>
       
@@ -609,8 +579,8 @@
         <div class="post-nav">
           <div class="post-nav-next post-nav-item">
             
-              <a href="/2015/03/23/Next主题内置标签/" rel="next" title="Next主题内置标签">
-                <i class="fa fa-chevron-left"></i> Next主题内置标签
+              <a href="/2018/03/10/hbase中的meta表/" rel="next" title="HBASE中的meta表">
+                <i class="fa fa-chevron-left"></i> HBASE中的meta表
               </a>
             
           </div>
@@ -619,8 +589,8 @@
 
           <div class="post-nav-prev post-nav-item">
             
-              <a href="/2016/08/30/Hexo常用命令记录/" rel="prev" title="Hexo常用命令记录">
-                Hexo常用命令记录 <i class="fa fa-chevron-right"></i>
+              <a href="/2018/08/29/hbase的spark接口/" rel="prev" title="spark接入HBASE">
+                spark接入HBASE <i class="fa fa-chevron-right"></i>
               </a>
             
           </div>
@@ -670,17 +640,8 @@
       
 
       
-        <ul class="sidebar-nav motion-element">
-          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
-            文章目录
-          </li>
-          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
-            站点概览
-          </li>
-        </ul>
-      
 
-      <div class="site-overview-wrap sidebar-panel">
+      <div class="site-overview-wrap sidebar-panel sidebar-panel-active">
         <div class="site-overview">
           <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
             
@@ -845,23 +806,6 @@
         </div>
       </div>
 
-      
-      <!--noindex-->
-        <div class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
-          <div class="post-toc">
-
-            
-            
-            
-            
-
-            
-              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#主要步骤"><span class="nav-number">1.</span> <span class="nav-text">主要步骤</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#主题配置"><span class="nav-number">2.</span> <span class="nav-text">主题配置</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#部署功能"><span class="nav-number">3.</span> <span class="nav-text">部署功能</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#RSS功能和mapsite功能"><span class="nav-number">4.</span> <span class="nav-text">RSS功能和mapsite功能</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#自定义站点搜索"><span class="nav-number">5.</span> <span class="nav-text">自定义站点搜索</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#配置分类和标签"><span class="nav-number">6.</span> <span class="nav-text">配置分类和标签</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#valine评论"><span class="nav-number">7.</span> <span class="nav-text">valine评论</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#添加阅读统计"><span class="nav-number">8.</span> <span class="nav-text">添加阅读统计</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#本文作者：tongtong"><span class="nav-number">8.0.0.1.</span> <span class="nav-text">本文作者：tongtong</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#本文链接：https-stongtong-github-io"><span class="nav-number">8.0.0.2.</span> <span class="nav-text">本文链接：https://stongtong.github.io/</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#版权申明：网站内容为tongtong所有，转载请注明出处。"><span class="nav-number">8.0.0.3.</span> <span class="nav-text">版权申明：网站内容为tongtong所有，转载请注明出处。</span></a></li></ol></li></ol></div>
-            
-
-          </div>
-        </div>
-      <!--/noindex-->
       
 
       
