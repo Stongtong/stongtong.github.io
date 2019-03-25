@@ -2,6 +2,20 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   
   <url>
+    <loc>https://tongfan.xyz/2018/03/10/hbase%E4%B8%AD%E7%9A%84meta%E8%A1%A8/</loc>
+    
+    <lastmod>2019-03-25T13:01:06.244Z</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>https://tongfan.xyz/2018/09/05/hbase%E9%97%AE%E9%A2%98%E8%AE%B0%E5%BD%95%EF%BC%88%E4%B8%80%EF%BC%89/</loc>
+    
+    <lastmod>2019-03-25T13:00:52.211Z</lastmod>
+    
+  </url>
+  
+  <url>
     <loc>https://tongfan.xyz/2018/01/13/markdown%E4%B8%AD%E7%9A%84%E7%BB%98%E5%9B%BE%E8%AF%AD%E6%B3%95-md/</loc>
     
     <lastmod>2019-03-19T14:17:23.169Z</lastmod>
@@ -26,13 +40,6 @@
     <loc>https://tongfan.xyz/2018/08/29/hbase%E7%9A%84spark%E6%8E%A5%E5%8F%A3/</loc>
     
     <lastmod>2019-03-17T09:15:54.317Z</lastmod>
-    
-  </url>
-  
-  <url>
-    <loc>https://tongfan.xyz/2018/03/10/hbase%E4%B8%AD%E7%9A%84meta%E8%A1%A8/</loc>
-    
-    <lastmod>2019-03-10T08:14:32.490Z</lastmod>
     
   </url>
   

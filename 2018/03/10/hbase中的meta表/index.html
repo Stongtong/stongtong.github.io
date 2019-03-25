@@ -104,7 +104,7 @@
 <meta property="og:site_name" content="XTong notes">
 <meta property="og:description" content="摘要：HBASE中存在一张隐含的meta表，隐含是因为其重要，可以说这张表示HBASE的管家表，不管是存数据还是查数据，这张表的作用都是十分重要的，本片文章详细对meta表进行说明。">
 <meta property="og:locale" content="zh-CN">
-<meta property="og:updated_time" content="2019-03-10T08:14:32.490Z">
+<meta property="og:updated_time" content="2019-03-25T13:01:06.244Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="HBASE中的meta表">
 <meta name="twitter:description" content="摘要：HBASE中存在一张隐含的meta表，隐含是因为其重要，可以说这张表示HBASE的管家表，不管是存数据还是查数据，这张表的作用都是十分重要的，本片文章详细对meta表进行说明。">
@@ -266,7 +266,7 @@
       
     
 
-    <a href="/tags/" rel="section"><i class="menu-item-icon fa fa-fw fa-tags"></i> <br>标签<span class="badge">15</span></a>
+    <a href="/tags/" rel="section"><i class="menu-item-icon fa fa-fw fa-tags"></i> <br>标签<span class="badge">16</span></a>
 
   </li>
         
@@ -304,7 +304,7 @@
       
     
 
-    <a href="/archives/" rel="section"><i class="menu-item-icon fa fa-fw fa-archive"></i> <br>归档<span class="badge">11</span></a>
+    <a href="/archives/" rel="section"><i class="menu-item-icon fa fa-fw fa-archive"></i> <br>归档<span class="badge">12</span></a>
 
   </li>
         
@@ -464,7 +464,7 @@
                 
                   <span class="post-meta-item-text">更新于</span>
                 
-                <time title="修改时间：2019-03-10 16:14:32" itemprop="dateModified" datetime="2019-03-10T16:14:32+08:00">2019-03-10</time>
+                <time title="修改时间：2019-03-25 21:01:06" itemprop="dateModified" datetime="2019-03-25T21:01:06+08:00">2019-03-25</time>
               
             
           </span>
@@ -531,7 +531,7 @@
       
         <p><strong>摘要</strong>：HBASE中存在一张隐含的meta表，隐含是因为其重要，可以说这张表示HBASE的管家表，不管是存数据还是查数据，这张表的作用都是十分重要的，本片文章详细对meta表进行说明。</p>
 <a id="more"></a>
-<h1 id="说明"><a href="#说明" class="headerlink" title="说明"></a>说明</h1><p>HBASE中的meta表，又称作catalog table，其作为HBASE中的table存储在寒色中，有人会问，如果这是一张存储在HBASE中的表，为什么执行list命令的时候，没有见过这张表呢？这里要进行说明一下，这张表是被HBASE shell 中的list命令排除了的，所以在list的时候，是没有显示的。</p>
+<h1 id="说明"><a href="#说明" class="headerlink" title="说明"></a>说明</h1><p>HBASE中的meta表，又称作catalog table，其作为HBASE中的table存储在hbase中，有人会问，如果这是一张存储在HBASE中的表，为什么执行list命令的时候，没有见过这张表呢？这里要进行说明一下，这张表是被HBASE shell 中的list命令排除了的，所以在list的时候，是没有显示的。</p>
 <p>其在HBASE中存储的全名问<code>hbase:meta</code>，hbase是namespace，meta为表名，之前其表名为<code>.MATE.</code>，这张表存储的内容为HBASE中所有的region的列表，同时这张表的位置（location）是存储在ZooKeeper中的。</p>
 <h1 id="结构"><a href="#结构" class="headerlink" title="结构"></a>结构</h1><p><code>hbase：meta</code>这张表的结构与一般hbase表并无区别，为rowkey和values（这是句废话），具体如下所示：</p>
 <p>rowkey格式</p>
@@ -693,7 +693,7 @@
                 
                   <a href="/archives/">
                 
-                    <span class="site-state-item-count">11</span>
+                    <span class="site-state-item-count">12</span>
                     <span class="site-state-item-name">日志</span>
                   </a>
                 </div>
@@ -763,7 +763,9 @@
                     
                       
                     
-                    <span class="site-state-item-count">15</span>
+                      
+                    
+                    <span class="site-state-item-count">16</span>
                     <span class="site-state-item-name">标签</span>
                   </a>
                 </div>
