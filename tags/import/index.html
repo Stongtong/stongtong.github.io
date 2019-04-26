@@ -96,18 +96,16 @@
 
 
 
-  <meta name="description" content="摘要： 对处理hbase集群中遇到的问题进行记录，需要注意的一点是在hbase遇到问题后，首先从hbase和Hadoop的日志中定位问题，这一点特别重要，可以少走很多弯路。">
-<meta name="keywords" content="Hbase,region">
-<meta property="og:type" content="article">
-<meta property="og:title" content="HBASE中region offline">
-<meta property="og:url" content="https://tongfan.xyz/2018/09/05/hbase问题记录（一）/index.html">
+  <meta name="description" content="You Never Know Who You Are">
+<meta property="og:type" content="website">
+<meta property="og:title" content="XTong notes">
+<meta property="og:url" content="https://tongfan.xyz/tags/import/index.html">
 <meta property="og:site_name" content="XTong notes">
-<meta property="og:description" content="摘要： 对处理hbase集群中遇到的问题进行记录，需要注意的一点是在hbase遇到问题后，首先从hbase和Hadoop的日志中定位问题，这一点特别重要，可以少走很多弯路。">
+<meta property="og:description" content="You Never Know Who You Are">
 <meta property="og:locale" content="zh-CN">
-<meta property="og:updated_time" content="2019-03-25T13:00:52.211Z">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:title" content="HBASE中region offline">
-<meta name="twitter:description" content="摘要： 对处理hbase集群中遇到的问题进行记录，需要注意的一点是在hbase遇到问题后，首先从hbase和Hadoop的日志中定位问题，这一点特别重要，可以少走很多弯路。">
+<meta name="twitter:title" content="XTong notes">
+<meta name="twitter:description" content="You Never Know Who You Are">
 
 
 
@@ -116,7 +114,7 @@
 
 
 
-  <link rel="canonical" href="https://tongfan.xyz/2018/09/05/hbase问题记录（一）/">
+  <link rel="canonical" href="https://tongfan.xyz/tags/import/">
 
 
 
@@ -126,7 +124,7 @@
   };
 </script>
 
-  <title>HBASE中region offline | XTong notes</title>
+  <title>标签: import | XTong notes</title>
   
 
 
@@ -174,7 +172,7 @@
     
   
 
-  <div class="container sidebar-position-left page-post-detail">
+  <div class="container sidebar-position-left ">
     <div class="headband"></div>
 
     <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
@@ -254,7 +252,7 @@
         
         
           
-          <li class="menu-item menu-item-tags">
+          <li class="menu-item menu-item-tags menu-item-active">
 
     
     
@@ -384,237 +382,85 @@
           
             
 
+    
+    
+      
+      
+    
+      
+      
+    
+      
+      
+    
+      
+      
+    
+      
+      
+    
+      
+      
+    
+    
+
+  
+
+
           
           <div id="content" class="content">
             
 
-  <div id="posts" class="posts-expand">
-    
+  
+  
+  
+  <div class="post-block tag">
 
-  
+    <div id="posts" class="posts-collapse">
+      <div class="collection-title">
+        <h2>import<small>标签</small>
+        </h2>
+      </div>
 
-  
-  
-  
-
-  
+      
+        
 
   <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
-  
-  
-  
-  <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="https://tongfan.xyz/2018/09/05/hbase问题记录（一）/">
+    <header class="post-header">
 
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="Auggie Wang">
-      <meta itemprop="description" content="You Never Know Who You Are">
-      <meta itemprop="image" content="/images/avatar.gif">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="XTong notes">
-    </span>
-
-    
-      <header class="post-header">
-
+      <h3 class="post-title">
         
+          <a class="post-title-link" href="/2019/03/10/hbase(4)——snapshot/" itemprop="url">
+            
+              <span itemprop="name">HBASE中数据迁入迁出</span>
+            
+          </a>
         
-          <h2 class="post-title" itemprop="name headline">HBASE中region offline
+      </h3>
 
-              
-            
-          </h2>
-        
+      <div class="post-meta">
+        <time class="post-time" itemprop="dateCreated" datetime="2019-03-10T15:05:58+08:00" content="2019-03-10">
+          03-10
+        </time>
+      </div>
 
-        <div class="post-meta">
-          <span class="post-time">
-
-            
-            
-            
-
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">发表于</span>
-              
-
-              
-                
-              
-
-              <time title="创建时间：2018-09-05 11:32:44" itemprop="dateCreated datePublished" datetime="2018-09-05T11:32:44+08:00">2018-09-05</time>
-            
-
-            
-              
-
-              
-                
-                <span class="post-meta-divider">|</span>
-                
-
-                <span class="post-meta-item-icon">
-                  <i class="fa fa-calendar-check-o"></i>
-                </span>
-                
-                  <span class="post-meta-item-text">更新于</span>
-                
-                <time title="修改时间：2019-03-25 21:00:52" itemprop="dateModified" datetime="2019-03-25T21:00:52+08:00">2019-03-25</time>
-              
-            
-          </span>
-
-          
-            <span class="post-category">
-            
-              <span class="post-meta-divider">|</span>
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">分类于</span>
-              
-              
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing"><a href="/categories/Hbase/" itemprop="url" rel="index"><span itemprop="name">Hbase</span></a></span>
-
-                
-                
-              
-            </span>
-          
-
-          
-            
-            
-              
-              <span class="post-comments-count">
-                <span class="post-meta-divider">|</span>
-                <span class="post-meta-item-icon">
-                  <i class="fa fa-comment-o"></i>
-                </span>
-            
-                <span class="post-meta-item-text">评论数：</span>
-                <a href="/2018/09/05/hbase问题记录（一）/#comments" itemprop="discussionUrl">
-                  <span class="post-comments-count valine-comment-count" data-xid="/2018/09/05/hbase问题记录（一）/" itemprop="commentCount"></span>
-                </a>
-              </span>
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        <p><strong>摘要</strong>： 对处理hbase集群中遇到的问题进行记录，需要注意的一点是在hbase遇到问题后，首先从hbase和Hadoop的日志中定位问题，这一点特别重要，可以少走很多弯路。</p>
-<a id="more"></a>
-<h1 id="hbase-region-offline问题"><a href="#hbase-region-offline问题" class="headerlink" title="hbase region offline问题"></a>hbase region offline问题</h1><p>今天在进行数据访问的时候，hbase集群报出region掉线的问题，从网上看是由于hbase进行split操作，老的region下线分裂导致的，而我们这边可能是部分磁盘掉线导致region掉线的问题，定位到问题，开始解决。</p>
-<p>从网上看到很多人说，重启集群可以解决，但是我尝试过后不起作用，最后找到一个解决方式，具体操作如下：</p>
-<figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">前提：HDFS fsck确保hbase根目录下文件没有损坏丢失，如果有，则先进行corrupt block移除。</span><br><span class="line">切记：一定要在所有Region都上线之后再修复，否则修复之后可能出现重复Region。</span><br><span class="line"></span><br><span class="line">步骤1. hbase hbck 检查输出所以ERROR信息，每个ERROR都会说明错误信息。</span><br><span class="line">步骤2. hbase hbck -fixTableOrphans 先修复tableinfo缺失问题，根据内存cache或者hdfs table 目录结构，重新生成tableinfo文件。</span><br><span class="line">步骤3. hbase hbck -fixHdfsOrphans 修复regioninfo缺失问题，根据region目录下的hfile重新生成regioninfo文件。</span><br><span class="line">步骤4. hbase hbck -fixHdfsOverlaps 修复region重叠问题，merge重叠的region为一个region目录，并从新生成一个regioninfo。</span><br><span class="line">步骤5. hbase hbck -fixHdfsHoles 修复region缺失，利用缺失的rowkey范围边界，生成新的region目录以及regioninfo填补这个空洞。</span><br><span class="line">步骤6. hbase hbck -fixMeta 修复meta表信息，利用regioninfo信息，重新生成对应meta row填写到meta表中，并为其填写默认的分配regionserver。</span><br><span class="line">步骤7. hbase hbck -fixAssignments 把这些offline的region触发上线，当region开始重新open 上线的时候，会被重新分配到真实的RegionServer上 , 并更新meta表上对应的行信息。</span><br></pre></td></tr></table></figure>
-<p>按步骤执行完毕后，解决<code>0 inconsistencies detected. Status: OK</code>数据不一致的问题。</p>
-<h1 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h1><p><code>hbase hbck</code>检查发现集群的不健康的状态，对问题进行具体定位，寻找适合的在线修复命令，修复之后，用<code>hbase hbck</code>进行检测，一般能够对问题进行修复， 如果数据底层被破坏，那么先要对底层的坏块进行处理，然后进行hbase的修复。在hbase使用过程中，很多时候会碰到一些奇怪的问题，尤其是在一个集群中安装多种组件的时候，不同组件的相互影响，搞的平台人员晕头转向的，很累，哈哈。</p>
-
-      
-    </div>
-
-    
-
-    
-    
-    
-
-    
-
-    
-      
-    
-    
-
-    
-
-    <footer class="post-footer">
-      
-        <div class="post-tags">
-          
-            <a href="/tags/Hbase/" rel="tag"># Hbase</a>
-          
-            <a href="/tags/region/" rel="tag"># region</a>
-          
-        </div>
-      
-
-      
-      
-      
-
-      
-        <div class="post-nav">
-          <div class="post-nav-next post-nav-item">
-            
-              <a href="/2018/08/29/hbase的spark接口/" rel="next" title="spark接入HBASE">
-                <i class="fa fa-chevron-left"></i> spark接入HBASE
-              </a>
-            
-          </div>
-
-          <span class="post-nav-divider"></span>
-
-          <div class="post-nav-prev post-nav-item">
-            
-              <a href="/2019/02/17/HBASE中的数据刷写/" rel="prev" title="HBASE中的数据刷写">
-                HBASE中的数据刷写 <i class="fa fa-chevron-right"></i>
-              </a>
-            
-          </div>
-        </div>
-      
-
-      
-      
-    </footer>
-  </div>
-  
-  
-  
+    </header>
   </article>
 
 
+      
+    </div>
+
   </div>
+  
+  
+  
+
+  
 
 
           </div>
           
-
-  
-    <div class="comments" id="comments">
-    </div>
-
-  
-
-
 
         </div>
         
@@ -635,17 +481,8 @@
       
 
       
-        <ul class="sidebar-nav motion-element">
-          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
-            文章目录
-          </li>
-          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
-            站点概览
-          </li>
-        </ul>
-      
 
-      <div class="site-overview-wrap sidebar-panel">
+      <div class="site-overview-wrap sidebar-panel sidebar-panel-active">
         <div class="site-overview">
           <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
             
@@ -821,23 +658,6 @@
       </div>
 
       
-      <!--noindex-->
-        <div class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
-          <div class="post-toc">
-
-            
-            
-            
-            
-
-            
-              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#hbase-region-offline问题"><span class="nav-number">1.</span> <span class="nav-text">hbase region offline问题</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#总结"><span class="nav-number">2.</span> <span class="nav-text">总结</span></a></li></ol></div>
-            
-
-          </div>
-        </div>
-      <!--/noindex-->
-      
 
       
 
@@ -976,10 +796,6 @@
 
 
   
-  <script src="/js/src/scrollspy.js?v=7.0.0"></script>
-<script src="/js/src/post-details.js?v=7.0.0"></script>
-
-
 
   
 
@@ -1019,8 +835,6 @@
 
 
 
-
-  
 
 
   

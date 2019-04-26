@@ -1,0 +1,1516 @@
+<!DOCTYPE html>
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+
+<html class="theme-next gemini use-motion" lang="zh-CN">
+<head><meta name="generator" content="Hexo 3.8.0">
+  <meta charset="UTF-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2">
+
+<link rel="stylesheet" href="/css/main.css?v=7.0.0">
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png?v=7.0.0">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png?v=7.0.0">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png?v=7.0.0">
+
+
+  <link rel="mask-icon" href="/images/logo.svg?v=7.0.0" color="#222">
+
+
+
+
+
+
+
+<script id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Gemini',
+    version: '7.0.0',
+    sidebar: {"position":"left","display":"post","offset":12,"b2t":false,"scrollpercent":false,"onmobile":false},
+    fancybox: false,
+    fastclick: false,
+    lazyload: false,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+  
+
+
+
+
+  <meta name="description" content="摘要：最近在集群中间进行数据的导入导出工作，接触到了Export工具和hbase的snapshot特性，下面对两种工具进行较为详细的说明，有什么错误之处希望大家及时交流，共同学习进步。">
+<meta name="keywords" content="Hbase,snapshot,export,import">
+<meta property="og:type" content="article">
+<meta property="og:title" content="HBASE中数据迁入迁出">
+<meta property="og:url" content="https://tongfan.xyz/2019/03/10/hbase(4)——snapshot/index.html">
+<meta property="og:site_name" content="XTong notes">
+<meta property="og:description" content="摘要：最近在集群中间进行数据的导入导出工作，接触到了Export工具和hbase的snapshot特性，下面对两种工具进行较为详细的说明，有什么错误之处希望大家及时交流，共同学习进步。">
+<meta property="og:locale" content="zh-CN">
+<meta property="og:updated_time" content="2019-04-26T13:31:54.478Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="HBASE中数据迁入迁出">
+<meta name="twitter:description" content="摘要：最近在集群中间进行数据的导入导出工作，接触到了Export工具和hbase的snapshot特性，下面对两种工具进行较为详细的说明，有什么错误之处希望大家及时交流，共同学习进步。">
+
+
+
+  <link rel="alternate" href="/atom.xml" title="XTong notes" type="application/atom+xml">
+
+
+
+
+  <link rel="canonical" href="https://tongfan.xyz/2019/03/10/hbase(4)——snapshot/">
+
+
+
+<script id="page.configurations">
+  CONFIG.page = {
+    sidebar: "",
+  };
+</script>
+
+  <title>HBASE中数据迁入迁出 | XTong notes</title>
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .motion-element,
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-title { opacity: initial; }
+
+  .use-motion .logo,
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-CN">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">XTong notes</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+    
+      
+        <h1 class="site-subtitle" itemprop="description">Live beautifully, dream passionately, love completely</h1>
+      
+    
+    
+  </div>
+
+  <div class="site-nav-toggle">
+    <button aria-label="切换导航栏">
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  
+    <ul id="menu" class="menu">
+      
+        
+        
+        
+          
+          <li class="menu-item menu-item-home">
+
+    
+    
+    
+      
+    
+
+    
+      
+    
+
+    <a href="/" rel="section"><i class="menu-item-icon fa fa-fw fa-home"></i> <br>首页</a>
+
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-about">
+
+    
+    
+    
+      
+    
+
+    
+      
+    
+
+    <a href="/about/" rel="section"><i class="menu-item-icon fa fa-fw fa-user"></i> <br>关于</a>
+
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-tags">
+
+    
+    
+    
+      
+    
+
+    
+      
+    
+
+    <a href="/tags/" rel="section"><i class="menu-item-icon fa fa-fw fa-tags"></i> <br>标签<span class="badge">19</span></a>
+
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-categories">
+
+    
+    
+    
+      
+    
+
+    
+      
+    
+
+    <a href="/categories/" rel="section"><i class="menu-item-icon fa fa-fw fa-th"></i> <br>分类<span class="badge">7</span></a>
+
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-archives">
+
+    
+    
+    
+      
+    
+
+    
+      
+    
+
+    <a href="/archives/" rel="section"><i class="menu-item-icon fa fa-fw fa-archive"></i> <br>归档<span class="badge">13</span></a>
+
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-sitemap">
+
+    
+    
+    
+      
+    
+
+    
+      
+    
+
+    <a href="/sitemap.xml" rel="section"><i class="menu-item-icon fa fa-fw fa-sitemap"></i> <br>站点地图</a>
+
+  </li>
+
+      
+      
+        <li class="menu-item menu-item-search">
+          
+            <a href="javascript:;" class="popup-trigger">
+          
+            
+              <i class="menu-item-icon fa fa-search fa-fw"></i> <br>搜索</a>
+        </li>
+      
+    </ul>
+  
+
+  
+
+  
+    <div class="site-search">
+      
+  <div class="popup search-popup local-search-popup">
+  <div class="local-search-header clearfix">
+    <span class="search-icon">
+      <i class="fa fa-search"></i>
+    </span>
+    <span class="popup-btn-close">
+      <i class="fa fa-times-circle"></i>
+    </span>
+    <div class="local-search-input-wrapper">
+      <input autocomplete="off" placeholder="搜索..." spellcheck="false" type="text" id="local-search-input">
+    </div>
+  </div>
+  <div id="local-search-result"></div>
+</div>
+
+
+
+    </div>
+  
+</nav>
+
+
+
+  
+
+
+
+</div>
+    </header>
+
+    
+
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+            
+
+          
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://tongfan.xyz/2019/03/10/hbase(4)——snapshot/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Auggie Wang">
+      <meta itemprop="description" content="You Never Know Who You Are">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="XTong notes">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h2 class="post-title" itemprop="name headline">HBASE中数据迁入迁出
+
+              
+            
+          </h2>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+
+            
+            
+            
+
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+
+              
+                
+              
+
+              <time title="创建时间：2019-03-10 15:05:58" itemprop="dateCreated datePublished" datetime="2019-03-10T15:05:58+08:00">2019-03-10</time>
+            
+
+            
+              
+
+              
+                
+                <span class="post-meta-divider">|</span>
+                
+
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-calendar-check-o"></i>
+                </span>
+                
+                  <span class="post-meta-item-text">更新于</span>
+                
+                <time title="修改时间：2019-04-26 21:31:54" itemprop="dateModified" datetime="2019-04-26T21:31:54+08:00">2019-04-26</time>
+              
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing"><a href="/categories/Hbase/" itemprop="url" rel="index"><span itemprop="name">Hbase</span></a></span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+            
+              
+              <span class="post-comments-count">
+                <span class="post-meta-divider">|</span>
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-comment-o"></i>
+                </span>
+            
+                <span class="post-meta-item-text">评论数：</span>
+                <a href="/2019/03/10/hbase(4)——snapshot/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count valine-comment-count" data-xid="/2019/03/10/hbase(4)——snapshot/" itemprop="commentCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p><strong>摘要</strong>：最近在集群中间进行数据的导入导出工作，接触到了Export工具和hbase的snapshot特性，下面对两种工具进行较为详细的说明，有什么错误之处希望大家及时交流，共同学习进步。</p>
+<a id="more"></a>
+<h1 id="export-amp-import"><a href="#export-amp-import" class="headerlink" title="export &amp; import"></a>export &amp; import</h1><h2 id="export"><a href="#export" class="headerlink" title="export"></a>export</h2><p>export工具使用比较简单，对hbase table在hdfs数据的序列化文件导出，其原理就是利用了hbase支持EndPoint和MapReduce程序两种方式而来的，使用就是hbase支持MapReduce这一特性，通过MapReduce程序实现，同时通过hbase Coprocessor的EndPoint也可以实现table的导出备份。</p>
+<p><strong>MapReduce的使用方式</strong>：<code>bin/hbase org.apache.hadoop.hbase.mapreduce.Export &lt;tablename&gt; &lt;outputdir&gt; [&lt;versions&gt; [&lt;starttime&gt; [&lt;endtime&gt;]]]</code>，在进行数据不定期导出并且导出表的数量较少时，临时使用这种方式很方便。</p>
+<p><strong>EndPoint的使用方式</strong>：<code>$ bin/hbase org.apache.hadoop.hbase.coprocessor.Export &lt;tablename&gt; &lt;outputdir&gt; [&lt;versions&gt; [&lt;starttime&gt; [&lt;endtime&gt;]]]</code>，在使用EndPoint方式时要注意，export coprocessor是可用的——要将<code>org.apache.hadoop.hbase.coprocessor.Export</code>添加到<code>hbase.coprocessor.region.classes</code>里边。</p>
+<p>两种导出方式都是将table导出到hdfs上，下面进行基于EndPoint方式和基于MapReduce方式的两种导出方式的比较。</p>
+<table>
+<thead>
+<tr>
+<th style="text-align:center"></th>
+<th style="text-align:center">EndPoint-based export</th>
+<th style="text-align:center">MapReduce-based export</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:center">hbase版本支持</td>
+<td style="text-align:center">2.0+</td>
+<td style="text-align:center">0.2.1+</td>
+</tr>
+<tr>
+<td style="text-align:center">maven依赖</td>
+<td style="text-align:center">hbase-endpoint</td>
+<td style="text-align:center">hbase-mapreduce(2.0+), hbase-server(-2.0)</td>
+</tr>
+<tr>
+<td style="text-align:center">前置操作</td>
+<td style="text-align:center">挂载EndPoint在target table上</td>
+<td style="text-align:center">部署MapReduce框架</td>
+</tr>
+<tr>
+<td style="text-align:center">读延迟</td>
+<td style="text-align:center">低，直接从region上读取数据</td>
+<td style="text-align:center">正常，传统的rpc scan</td>
+</tr>
+<tr>
+<td style="text-align:center">读扩展性</td>
+<td style="text-align:center">依赖于region的数量</td>
+<td style="text-align:center">依赖于mapper的数量(TableInputFormatBase#getSplit)</td>
+</tr>
+<tr>
+<td style="text-align:center">超时</td>
+<td style="text-align:center">操作超时，hbase.client.operation.timeout配置</td>
+<td style="text-align:center">scan超时，hbase.client.scanner.timeout.period配置</td>
+</tr>
+<tr>
+<td style="text-align:center">权限设置</td>
+<td style="text-align:center">读，执行</td>
+<td style="text-align:center">读</td>
+</tr>
+<tr>
+<td style="text-align:center">容错</td>
+<td style="text-align:center">没有</td>
+<td style="text-align:center">依赖于MapReduce框架</td>
+</tr>
+</tbody>
+</table>
+<p>注意：hbase执行MapReduce程序的过程中，其map的数量由TableInputFormatBase类中的getSplits决定，一般是一个split对应一个完整的region，每个表中的开始region是没有startrow的，对应的最后一个没有endrow，详细地可以看一下splits这个方法的源码。</p>
+<p>默认情况下，export工具不管存储数据版本的多少，仅仅导出给定cell的最新版本，为了导出多版本的数据，可以通过\<versions>参数指定版本的数量。<strong>input scan 缓存的设置可以通过 hbase.client.scanner.caching 参数来进行指定</strong>。</versions></p>
+<p><strong>附加内容</strong>：由于我们使用的hbase版本为1.2.2，通过命令来查看了一下hbase通过MapReduce方式进行export可以指定的参数，具体参数如下：</p>
+<figure class="highlight sh"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line">Usage: Export [-D &lt;property=value&gt;]* &lt;tablename&gt; &lt;outputdir&gt; [&lt;versions&gt; [&lt;starttime&gt; [&lt;endtime&gt;]] [^[regex pattern] or [Prefix] to filter]]</span><br><span class="line"></span><br><span class="line">  Note: -D properties will be applied to the conf used. </span><br><span class="line">  For example: </span><br><span class="line">   -D mapreduce.output.fileoutputformat.compress=<span class="literal">true</span></span><br><span class="line">   -D mapreduce.output.fileoutputformat.compress.codec=org.apache.hadoop.io.compress.GzipCodec</span><br><span class="line">   -D mapreduce.output.fileoutputformat.compress.type=BLOCK</span><br><span class="line">  Additionally, the following SCAN properties can be specified</span><br><span class="line">  to control/<span class="built_in">limit</span> what is exported..</span><br><span class="line">   -D hbase.mapreduce.scan.column.family=&lt;familyName&gt;</span><br><span class="line">   -D hbase.mapreduce.include.deleted.rows=<span class="literal">true</span></span><br><span class="line">   -D hbase.mapreduce.scan.row.start=&lt;ROWSTART&gt;</span><br><span class="line">   -D hbase.mapreduce.scan.row.stop=&lt;ROWSTOP&gt;</span><br><span class="line">For performance consider the following properties:</span><br><span class="line">   -Dhbase.client.scanner.caching=100</span><br><span class="line">   -Dmapreduce.map.speculative=<span class="literal">false</span></span><br><span class="line">   -Dmapreduce.reduce.speculative=<span class="literal">false</span></span><br><span class="line">For tables with very wide rows consider setting the batch size as below:</span><br><span class="line">   -Dhbase.export.scanner.batch=10</span><br></pre></td></tr></table></figure>
+<h2 id="import"><a href="#import" class="headerlink" title="import"></a>import</h2><p>介绍完export，大家其实对import的操作基本上也就了解的差不多了，import就是export操作的逆过程，其基本命令如下：</p>
+<figure class="highlight sh"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ bin/hbase org.apache.hadoop.hbase.mapreduce.Import &lt;tablename&gt; &lt;inputdir&gt;</span><br></pre></td></tr></table></figure>
+<p>如果是不同hbase版本的集群，可以通过这个命令来进行导入，但是需要对导入的hbase table文件的hbase 版本进行指定，例如hbase 0.94的导出文件要导入hbase 0.96的hbase集群中，那么其执行命令如下:</p>
+<figure class="highlight sh"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ bin/hbase -Dhbase.import.version=0.94 org.apache.hadoop.hbase.mapreduce.Import &lt;tablename&gt; &lt;inputdir&gt;</span><br></pre></td></tr></table></figure>
+<p>附加内容：</p>
+<p>对hbase 1.2.2的import的参数进行说明如下：</p>
+<figure class="highlight sh"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br></pre></td><td class="code"><pre><span class="line">usage: general options are:</span><br><span class="line"> -archives &lt;paths&gt;              comma separated archives to be unarchived</span><br><span class="line">                                on the compute machines.</span><br><span class="line"> -conf &lt;configuration file&gt;     specify an application configuration file</span><br><span class="line"> -D &lt;property=value&gt;            use value <span class="keyword">for</span> given property</span><br><span class="line"> -files &lt;paths&gt;                 comma separated files to be copied to the</span><br><span class="line">                                map reduce cluster</span><br><span class="line"> -fs &lt;<span class="built_in">local</span>|namenode:port&gt;      specify a namenode</span><br><span class="line"> -jt &lt;<span class="built_in">local</span>|jobtracker:port&gt;    specify a job tracker</span><br><span class="line"> -libjars &lt;paths&gt;               comma separated jar files to include <span class="keyword">in</span></span><br><span class="line">                                the classpath.</span><br><span class="line"> -tokenCacheFile &lt;tokensFile&gt;   name of the file with the tokens</span><br><span class="line">ERROR: Wrong number of arguments: 0</span><br><span class="line">Usage: Import [options] &lt;tablename&gt; &lt;inputdir&gt;</span><br><span class="line">By default Import will load data directly into HBase. To instead generate</span><br><span class="line">HFiles of data to prepare <span class="keyword">for</span> a bulk data load, pass the option:</span><br><span class="line">  -Dimport.bulk.output=/path/<span class="keyword">for</span>/output</span><br><span class="line"> To apply a generic org.apache.hadoop.hbase.filter.Filter to the input, use</span><br><span class="line">  -Dimport.filter.class=&lt;name of filter class&gt;</span><br><span class="line">  -Dimport.filter.args=&lt;comma separated list of args <span class="keyword">for</span> filter</span><br><span class="line"> NOTE: The filter will be applied BEFORE doing key renames via the HBASE_IMPORTER_RENAME_CFS property. Futher, filters will only use the Filter<span class="comment">#filterRowKey(byte[] buffer, int offset, int length) method to identify  whether the current row needs to be ignored completely for processing and  Filter#filterKeyValue(KeyValue) method to determine if the KeyValue should be added; Filter.ReturnCode#INCLUDE and #INCLUDE_AND_NEXT_COL will be considered as including the KeyValue.</span></span><br><span class="line">To import data exported from HBase 0.94, use</span><br><span class="line">  -Dhbase.import.version=0.94</span><br><span class="line">For performance consider the following options:</span><br><span class="line">  -Dmapreduce.map.speculative=<span class="literal">false</span></span><br><span class="line">  -Dmapreduce.reduce.speculative=<span class="literal">false</span></span><br><span class="line">  -Dimport.wal.durability=&lt;Used <span class="keyword">while</span> writing data to hbase. Allowed values are the supported durability values like SKIP_WAL/ASYNC_WAL/SYNC_WAL/</span><br><span class="line">...&gt;</span><br></pre></td></tr></table></figure>
+<h2 id="importTsv"><a href="#importTsv" class="headerlink" title="importTsv"></a>importTsv</h2><p>当看到tsv的时候，我并不知道是什么意思，这个有点尴尬，下面进行一下解释，tsv就是table separate value，当然了csv就是comma separate value，这个也是很好理解，看来平时的积累还是不够，废话不多说，介绍hbase自带的这个功能，顾名思义这个命令就是import的近亲，它有两种使用方式，一种是通过puts将tsv格式的数据从hdfs加载到hbase，另外一种是将数据转变成storefile通过completebulkload来进行数据加载。</p>
+<p>1、通过puts进行数据加载（不是bulk load的方式）:</p>
+<figure class="highlight sh"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">$ bin/hbase org.apache.hadoop.hbase.mapreduce.ImportTsv -Dimporttsv.columns=a,b,c</span><br><span class="line">&lt;tablename&gt; &lt;hdfs-inputdir&gt;</span><br></pre></td></tr></table></figure>
+<p>2、通过bulk-loading生成storefile的方式：</p>
+<figure class="highlight sh"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">$ bin/hbase org.apache.hadoop.hbase.mapreduce.ImportTsv -Dimporttsv.columns=a,b,c</span><br><span class="line">-Dimporttsv.bulk.output=hdfs://storefile-outputdir &lt;tablename&gt; &lt;hdfs-data-inputdir&gt;</span><br></pre></td></tr></table></figure>
+<p>importTsv的参数内容，如下：</p>
+<figure class="highlight sh"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br></pre></td><td class="code"><pre><span class="line">Usage: importtsv -Dimporttsv.columns=a,b,c &lt;tablename&gt; &lt;inputdir&gt;</span><br><span class="line"></span><br><span class="line">Imports the given input directory of TSV data into the specified table.</span><br><span class="line"></span><br><span class="line">The column names of the TSV data must be specified using the -Dimporttsv.columns</span><br><span class="line">option. This option takes the form of comma-separated column names, <span class="built_in">where</span> each</span><br><span class="line">column name is either a simple column family, or a columnfamily:qualifier. The special</span><br><span class="line">column name HBASE_ROW_KEY is used to designate that this column should be used</span><br><span class="line">as the row key <span class="keyword">for</span> each imported record. You must specify exactly one column</span><br><span class="line">to be the row key, and you must specify a column name <span class="keyword">for</span> every column that exists <span class="keyword">in</span> the</span><br><span class="line">input data. Another special columnHBASE_TS_KEY designates that this column should be</span><br><span class="line">used as timestamp <span class="keyword">for</span> each record. Unlike HBASE_ROW_KEY, HBASE_TS_KEY is optional.</span><br><span class="line">You must specify at most one column as timestamp key <span class="keyword">for</span> each imported record.</span><br><span class="line">Record with invalid timestamps (blank, non-numeric) will be treated as bad record.</span><br><span class="line">Note: <span class="keyword">if</span> you use this option, <span class="keyword">then</span> <span class="string">'importtsv.timestamp'</span> option will be ignored.</span><br><span class="line"></span><br><span class="line">Other special columns that can be specified are HBASE_CELL_TTL and HBASE_CELL_VISIBILITY.</span><br><span class="line">HBASE_CELL_TTL designates that this column will be used as a Cell<span class="string">'s Time To Live (TTL) attribute.</span></span><br><span class="line"><span class="string">HBASE_CELL_VISIBILITY designates that this column contains the visibility label expression.</span></span><br><span class="line"><span class="string"></span></span><br><span class="line"><span class="string">HBASE_ATTRIBUTES_KEY can be used to specify Operation Attributes per record.</span></span><br><span class="line"><span class="string"> Should be specified as key=&gt;value where -1 is used </span></span><br><span class="line"><span class="string"> as the seperator.  Note that more than one OperationAttributes can be specified.</span></span><br><span class="line"><span class="string">By default importtsv will load data directly into HBase. To instead generate</span></span><br><span class="line"><span class="string">HFiles of data to prepare for a bulk data load, pass the option:</span></span><br><span class="line"><span class="string">  -Dimporttsv.bulk.output=/path/for/output</span></span><br><span class="line"><span class="string">  Note: if you do not use this option, then the target table must already exist in HBase</span></span><br><span class="line"><span class="string"></span></span><br><span class="line"><span class="string">Other options that may be specified with -D include:</span></span><br><span class="line"><span class="string">  -Dimporttsv.skip.bad.lines=false - fail if encountering an invalid line</span></span><br><span class="line"><span class="string">  '</span>-Dimporttsv.separator=|<span class="string">' - eg separate on pipes instead of tabs</span></span><br><span class="line"><span class="string">  -Dimporttsv.timestamp=currentTimeAsLong - use the specified timestamp for the import</span></span><br><span class="line"><span class="string">  -Dimporttsv.mapper.class=my.Mapper - A user-defined Mapper to use instead of org.apache.hadoop.hbase.mapreduce.TsvImporterMapper</span></span><br><span class="line"><span class="string">  -Dmapreduce.job.name=jobName - use the specified mapreduce job name for the import</span></span><br><span class="line"><span class="string">  -Dcreate.table=no - can be used to avoid creation of table by this tool</span></span><br><span class="line"><span class="string">  Note: if you set this to '</span>no<span class="string">', then the target table must already exist in HBase</span></span><br><span class="line"><span class="string">  -Dno.strict=true - ignore column family check in hbase table. Default is false</span></span><br><span class="line"><span class="string"></span></span><br><span class="line"><span class="string">For performance consider the following options:</span></span><br><span class="line"><span class="string">  -Dmapreduce.map.speculative=false</span></span><br><span class="line"><span class="string">  -Dmapreduce.reduce.speculative=false</span></span><br></pre></td></tr></table></figure>
+<h3 id="示例"><a href="#示例" class="headerlink" title="示例"></a>示例</h3><p>如例，有表datatsv，列簇d和两列c1、c2，数据格式如下：</p>
+<figure class="highlight sh"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">row1 c1 c2</span><br><span class="line">row2 c1 c2</span><br></pre></td></tr></table></figure>
+<p>其bulk-load加载方式的命令如下：</p>
+<figure class="highlight sh"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">HADOOP_CLASSPATH=`<span class="variable">$&#123;HBASE_HOME&#125;</span>/bin/hbase classpath` <span class="variable">$&#123;HADOOP_HOME&#125;</span>/bin/hadoop jar</span><br><span class="line"><span class="variable">$&#123;HBASE_HOME&#125;</span>/hbase-mapreduce-VERSION.jar importtsv</span><br><span class="line">-Dimporttsv.columns=HBASE_ROW_KEY,d:c1,d:c2</span><br><span class="line">-Dimporttsv.bulk.output=hdfs://storefileoutput datatsv hdfs://inputfile</span><br></pre></td></tr></table></figure>
+<p>注意：如果要通过这种方式导入大量数据，首先要确保hbase的表预分区已经做了，否则会造成split-merge  storm。</p>
+<h3 id="CompleteBulkLoad"><a href="#CompleteBulkLoad" class="headerlink" title="CompleteBulkLoad"></a>CompleteBulkLoad</h3><p>completebulkload将生成的StoreFiles导入hbase table，有如下两种方式：</p>
+<p>explicit classname:</p>
+<figure class="highlight sh"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">$ bin/hbase org.apache.hadoop.hbase.tool.LoadIncrementalHFiles</span><br><span class="line">&lt;hdfs://storefileoutput&gt; &lt;tablename&gt;</span><br></pre></td></tr></table></figure>
+<p>driver:</p>
+<figure class="highlight sh"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">HADOOP_CLASSPATH=`<span class="variable">$&#123;HBASE_HOME&#125;</span>/bin/hbase classpath` <span class="variable">$&#123;HADOOP_HOME&#125;</span>/bin/hadoop jar</span><br><span class="line"><span class="variable">$&#123;HBASE_HOME&#125;</span>/hbase-server-VERSION.jar completebulkload &lt;hdfs://storefileoutput&gt;</span><br><span class="line">&lt;tablename&gt;</span><br></pre></td></tr></table></figure>
+<p>注意：通过MapReduce生成的数据文件通常和hbase的处理线程是不兼容的，所以hdfs权限是可用的，在运行completeBulkLoad之前对这些权限必须要进行更新。</p>
+<h1 id="snapshot"><a href="#snapshot" class="headerlink" title="snapshot"></a>snapshot</h1><p>hbase 快照允许对某一时刻的表信息进行备份，并且这种方式是资源消耗最小的一种。snapshot是table元数据的不变集合并且获取快照那一时刻table的hfile列表，snapshot克隆操作会根据该snapshot创建一个新table，而恢复操作会将快照中的数据恢复至表中。“克隆”和“恢复”操作并不需要任何的数据拷贝，下层的hfile并不会进行任何的修改操作。相似地，将一个snapshot导入至另外一个集群会对本集群的regionserver有小的影响。</p>
+<p>hbase0.94.6之前的版本，想要对表进行克隆备份只能通过CopyTable和ExportTable，或者将表下线后，拷贝这个表的所有的hfile文件，这种操作的会导致region server性能下降，或者你需要对表进行下线操作，造成该表的读写受影响。</p>
+<p>在使用hbase snapshot属性时，需要进行配置，在hbase的版本是0.95+是默认开启的：</p>
+<figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="name">property</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;<span class="name">name</span>&gt;</span>hbase.snapshot.enabled<span class="tag">&lt;/<span class="name">name</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;<span class="name">value</span>&gt;</span>true<span class="tag">&lt;/<span class="name">value</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">property</span>&gt;</span></span><br></pre></td></tr></table></figure>
+<h2 id="快照生成"><a href="#快照生成" class="headerlink" title="快照生成"></a>快照生成</h2><p>命令行生成快照的命令如下，这个操作会生成快照，不论table是否在线，同时不会涉及数据的拷贝操作。</p>
+<figure class="highlight sh"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">$ ./bin/hbase shell</span><br><span class="line">hbase&gt; snapshot <span class="string">'myTable'</span>, <span class="string">'myTableSnapshot-122112'</span></span><br></pre></td></tr></table></figure>
+<p>###无刷写生成快照</p>
+<p>默认情况下，在生成快照之前，会执行一次hbase memstore的数据刷写，这意味着快照的内容会包含内存中的数据，大多数情况下，这是期望的操作。然而，如果你在内存中设置了容错数据并且期望不包含在snapshot中，可以使用<code>skip_flush</code>属性在生成快照时不进行数据的刷写操作，具体命令如下：</p>
+<figure class="highlight sh"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">hbase&gt; snapshot <span class="string">'mytable'</span>, <span class="string">'snapshot123'</span>, &#123;SKIP_FLUSH =&gt; <span class="literal">true</span>&#125;</span><br></pre></td></tr></table></figure>
+<p><strong>注意</strong>：无论flush是否开启，都无法确定或者预测一个并发的插入或者更新操作是否会包含在给定的snapshot中，也就是说，简而言之两个东西没有直接关系；snapshot仅仅是一个表在一段时间窗口的呈现，而且生成snapshot中到达每个regionserver的时间从几秒到几分钟是不确定的，这个依赖于资源加载、硬件、网络等因素，当然了一个给定的插入或者更新操作是在内存中还是已经刷写到磁盘上这个也是不可知的。</p>
+<h2 id="list-snapshot"><a href="#list-snapshot" class="headerlink" title="list snapshot"></a>list snapshot</h2><figure class="highlight sh"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">hbase&gt; list_snapshots</span><br></pre></td></tr></table></figure>
+<h2 id="delete-snapshot"><a href="#delete-snapshot" class="headerlink" title="delete snapshot"></a>delete snapshot</h2><figure class="highlight sh"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">hbase&gt; delete_snapshot <span class="string">'myTableSnapshot-122112'</span></span><br></pre></td></tr></table></figure>
+<h2 id="从snapshot克隆table"><a href="#从snapshot克隆table" class="headerlink" title="从snapshot克隆table"></a>从snapshot克隆table</h2><p>从一个快照可以生成一张新表，当然这张新表中包含了snapshot生成之前的所有的数据，克隆操作并不涉及到数据的复制迁移，当然克隆出来的新表并不会对原始表或者快照有影响。</p>
+<figure class="highlight sh"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">hbase&gt; clone_snapshot <span class="string">'myTableSnapshot-122112'</span>, <span class="string">'myNewTestTable'</span></span><br></pre></td></tr></table></figure>
+<h2 id="restore-snapshot"><a href="#restore-snapshot" class="headerlink" title="restore snapshot"></a>restore snapshot</h2><p>restore操作需要一个表示disable的，表将会被恢复至快照生成之刻的状态和数据，如果需要的话还会更改表的数据和schema。</p>
+<figure class="highlight sh"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">hbase&gt; <span class="built_in">disable</span> <span class="string">'myTable'</span></span><br><span class="line">hbase&gt; restore_snapshot <span class="string">'myTableSnapshot-122112'</span></span><br></pre></td></tr></table></figure>
+<p><strong>注意</strong>： 因为副本在log层面 work，而snapshot是在文件系统层面，所以在恢复操作之后，副本将会和master节点的状态不同，如果要使用snapshot恢复表中的数据，需要停止replication并且重启bootstrap。</p>
+<h2 id="snapshot的操作和ACLs"><a href="#snapshot的操作和ACLs" class="headerlink" title="snapshot的操作和ACLs"></a>snapshot的操作和ACLs</h2><p>如果使用访问控制<code>AccessController</code>来进行安全配置，那么仅仅全局管理员可以执行生成、克隆和恢复快照的操作，同时这些操作不会占用/捕获（capture）acl权限，这意味着恢复表的操作会保护已存在表的ACL权限，同时如果管理员不添加权限，由snapshot克隆新表也是没有权限的。</p>
+<h2 id="导至其他集群"><a href="#导至其他集群" class="headerlink" title="导至其他集群"></a>导至其他集群</h2><p>ExportSnapshot工具可以复制和snapshot相关数据（hfile， logs， snapshot metadata）至另一个集群，工具执行MR job， 类似于distcp工具，因为snapshot是文件系统层面的，所以hbase集群不必是online的。命令如下：</p>
+<figure class="highlight sh"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ bin/hbase org.apache.hadoop.hbase.snapshot.ExportSnapshot -snapshot MySnapshot -copy-to hdfs://srv2:8082/hbase -mappers 16</span><br></pre></td></tr></table></figure>
+<p>这样就把一个叫snapshot的的快照复制到了srv2集群。当然在这个命令中还包括了多个命令参数，可以通过bandwidth来限制复制过程中的带宽使用。</p>
+<figure class="highlight sh"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">$ bin/hbase org.apache.hadoop.hbase.snapshot.ExportSnapshot -snapshot MySnapshot -copy</span><br><span class="line">-to hdfs://srv2:8082/hbase -mappers 16 -bandwidth 200</span><br></pre></td></tr></table></figure>
+<p>下面是对hbase这个工具参数的介绍：</p>
+<figure class="highlight sh"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line">Usage: bin/hbase org.apache.hadoop.hbase.snapshot.ExportSnapshot [options]</span><br><span class="line"> <span class="built_in">where</span> [options] are:</span><br><span class="line">  -h|-<span class="built_in">help</span>                Show this <span class="built_in">help</span> and <span class="built_in">exit</span>.</span><br><span class="line">  -snapshot NAME          Snapshot to restore.</span><br><span class="line">  -copy-to NAME           Remote destination hdfs://</span><br><span class="line">  -copy-from NAME         Input folder hdfs:// (default hbase.rootdir)</span><br><span class="line">  -no-checksum-verify     Do not verify checksum, use name+length only.</span><br><span class="line">  -no-target-verify       Do not verify the integrity of the \exported snapshot.</span><br><span class="line">  -overwrite              Rewrite the snapshot manifest <span class="keyword">if</span> already exists</span><br><span class="line">  -chuser USERNAME        Change the owner of the files to the specified one.</span><br><span class="line">  -chgroup GROUP          Change the group of the files to the specified one.</span><br><span class="line">  -chmod MODE             Change the permission of the files to the specified one.</span><br><span class="line">  -mappers                Number of mappers to use during the copy (mapreduce.job.maps).</span><br><span class="line">  -bandwidth              Limit bandwidth to this value <span class="keyword">in</span> MB/second.</span><br><span class="line"></span><br><span class="line">Examples:</span><br><span class="line">  hbase org.apache.hadoop.hbase.snapshot.ExportSnapshot \</span><br><span class="line">    -snapshot MySnapshot -copy-to hdfs://srv2:8082/hbase \</span><br><span class="line">    -chuser MyUser -chgroup MyGroup -chmod 700 -mappers 16</span><br><span class="line"></span><br><span class="line">  hbase org.apache.hadoop.hbase.snapshot.ExportSnapshot \</span><br><span class="line">    -snapshot MySnapshot -copy-from hdfs://srv2:8082/hbase \</span><br><span class="line">    -copy-to hdfs://srv1:50070/hbase \</span><br></pre></td></tr></table></figure>
+<p>上面每个命令都有较为完整的说明和示例，这里不再解释。当然hbase说明文档也说明了在Amazon的s3和微软的Auzure上的导出和恢复，我们现在还没有涉及到这一部分，因此不再这里介绍了。</p>
+<h1 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h1><p>本篇博客主要根据hbase的说明文档和自己最近导数据场景的实践，总结了两种在hbase集群中导入导出数据的两种方式，在进行hbase文档（2.0）查看时，发现hbase其实已经做了很多的工作，很多平时工作的场景基本在hbase中都有覆盖，平时没事还是要多多看看文档，多多积累，在碰到陌生场景是才不至于“惊慌”。</p>
+<div class="note primary">
+            <h4 id="本文作者：tongtong"><a href="#本文作者：tongtong" class="headerlink" title="本文作者：tongtong"></a>本文作者：tongtong</h4><h4 id="本文链接：https-stongtong-github-io"><a href="#本文链接：https-stongtong-github-io" class="headerlink" title="本文链接：https://stongtong.github.io/"></a>本文链接：<a href="https://stongtong.github.io/">https://stongtong.github.io/</a></h4><h4 id="版权申明：网站内容为tongtong所有，转载请注明出处。"><a href="#版权申明：网站内容为tongtong所有，转载请注明出处。" class="headerlink" title="版权申明：网站内容为tongtong所有，转载请注明出处。"></a>版权申明：网站内容为tongtong所有，转载请注明出处。</h4>
+          </div>
+
+      
+    </div>
+
+    
+
+    
+    
+    
+
+    
+
+    
+      
+    
+    
+
+    
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/Hbase/" rel="tag"># Hbase</a>
+          
+            <a href="/tags/snapshot/" rel="tag"># snapshot</a>
+          
+            <a href="/tags/export/" rel="tag"># export</a>
+          
+            <a href="/tags/import/" rel="tag"># import</a>
+          
+        </div>
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2019/02/17/HBASE中的数据刷写/" rel="next" title="HBASE中的数据刷写">
+                <i class="fa fa-chevron-left"></i> HBASE中的数据刷写
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+  </div>
+
+
+          </div>
+          
+
+  
+    <div class="comments" id="comments">
+    </div>
+
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+            
+              <img class="site-author-image" itemprop="image" src="/images/avatar.gif" alt="Auggie Wang">
+            
+              <p class="site-author-name" itemprop="name">Auggie Wang</p>
+              <p class="site-description motion-element" itemprop="description">You Never Know Who You Are</p>
+          </div>
+
+          
+            <nav class="site-state motion-element">
+              
+                <div class="site-state-item site-state-posts">
+                
+                  <a href="/archives/">
+                
+                    <span class="site-state-item-count">13</span>
+                    <span class="site-state-item-name">日志</span>
+                  </a>
+                </div>
+              
+
+              
+                
+                
+                <div class="site-state-item site-state-categories">
+                  <a href="/categories/index.html">
+                    
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                    <span class="site-state-item-count">7</span>
+                    <span class="site-state-item-name">分类</span>
+                  </a>
+                </div>
+              
+
+              
+                
+                
+                <div class="site-state-item site-state-tags">
+                  <a href="/tags/index.html">
+                    
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                    <span class="site-state-item-count">19</span>
+                    <span class="site-state-item-name">标签</span>
+                  </a>
+                </div>
+              
+            </nav>
+          
+
+          
+            <div class="feed-link motion-element">
+              <a href="/atom.xml" rel="alternate">
+                <i class="fa fa-rss"></i>
+                RSS
+              </a>
+            </div>
+          
+
+          
+            <div class="links-of-author motion-element">
+              
+                <span class="links-of-author-item">
+                  
+                  
+                    
+                  
+                  
+                    
+                  
+                  <a href="https://github.com/Stongtong" title="GitHub &rarr; https://github.com/Stongtong" rel="noopener" target="_blank"><i class="fa fa-fw fa-github"></i>GitHub</a>
+                </span>
+              
+                <span class="links-of-author-item">
+                  
+                  
+                    
+                  
+                  
+                    
+                  
+                  <a href="mailto:tongxiao@outlook.com" title="E-Mail &rarr; mailto:tongxiao@outlook.com" rel="noopener" target="_blank"><i class="fa fa-fw fa-envelope"></i>E-Mail</a>
+                </span>
+              
+                <span class="links-of-author-item">
+                  
+                  
+                    
+                  
+                  
+                    
+                  
+                  <a href="https://www.zhihu.com/people/wang-xiao-tong-64-73/activities" title="Zhihu &rarr; https://www.zhihu.com/people/wang-xiao-tong-64-73/activities" rel="noopener" target="_blank"><i class="fa fa-fw fa-flag"></i>Zhihu</a>
+                </span>
+              
+                <span class="links-of-author-item">
+                  
+                  
+                    
+                  
+                  
+                    
+                  
+                  <a href="http://blog.csdn.net/wangxiaotongfan" title="CSDN &rarr; http://blog.csdn.net/wangxiaotongfan" rel="noopener" target="_blank"><i class="fa fa-fw fa-coffee"></i>CSDN</a>
+                </span>
+              
+            </div>
+          
+
+          
+
+          
+          
+
+          
+            
+          
+          
+
+        </div>
+      </div>
+
+      
+      <!--noindex-->
+        <div class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+            
+            
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#export-amp-import"><span class="nav-number">1.</span> <span class="nav-text">export &amp; import</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#export"><span class="nav-number">1.1.</span> <span class="nav-text">export</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#import"><span class="nav-number">1.2.</span> <span class="nav-text">import</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#importTsv"><span class="nav-number">1.3.</span> <span class="nav-text">importTsv</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#示例"><span class="nav-number">1.3.1.</span> <span class="nav-text">示例</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#CompleteBulkLoad"><span class="nav-number">1.3.2.</span> <span class="nav-text">CompleteBulkLoad</span></a></li></ol></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#snapshot"><span class="nav-number">2.</span> <span class="nav-text">snapshot</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#快照生成"><span class="nav-number">2.1.</span> <span class="nav-text">快照生成</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#list-snapshot"><span class="nav-number">2.2.</span> <span class="nav-text">list snapshot</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#delete-snapshot"><span class="nav-number">2.3.</span> <span class="nav-text">delete snapshot</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#从snapshot克隆table"><span class="nav-number">2.4.</span> <span class="nav-text">从snapshot克隆table</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#restore-snapshot"><span class="nav-number">2.5.</span> <span class="nav-text">restore snapshot</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#snapshot的操作和ACLs"><span class="nav-number">2.6.</span> <span class="nav-text">snapshot的操作和ACLs</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#导至其他集群"><span class="nav-number">2.7.</span> <span class="nav-text">导至其他集群</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#总结"><span class="nav-number">3.</span> <span class="nav-text">总结</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#本文作者：tongtong"><span class="nav-number">3.0.0.1.</span> <span class="nav-text">本文作者：tongtong</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#本文链接：https-stongtong-github-io"><span class="nav-number">3.0.0.2.</span> <span class="nav-text">本文链接：https://stongtong.github.io/</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#版权申明：网站内容为tongtong所有，转载请注明出处。"><span class="nav-number">3.0.0.3.</span> <span class="nav-text">版权申明：网站内容为tongtong所有，转载请注明出处。</span></a></li></ol></li></ol></div>
+            
+
+          </div>
+        </div>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; <span itemprop="copyrightYear">2019</span>
+  <span class="with-love" id="animate">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Auggie Wang</span>
+
+  
+
+  
+</div>
+
+
+
+
+
+
+
+
+
+
+  <script src="https://unpkg.com/mermaid@7.1.2/dist/mermaid.min.js"></script>
+  <script>
+    if (window.mermaid) {
+      mermaid.initialize({theme: 'forest'});
+    }
+  </script>
+
+
+        
+
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+    
+
+    
+
+    
+  </div>
+
+  
+
+<script>
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+    
+    
+  
+  <script color="0,0,255" opacity="0.5" zindex="-1" count="99" src="/lib/canvas-nest/canvas-nest.min.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  <script src="/lib/jquery/index.js?v=2.1.3"></script>
+
+  
+  <script src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+
+  
+  <script src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+
+  
+
+
+  <script src="/js/src/utils.js?v=7.0.0"></script>
+
+  <script src="/js/src/motion.js?v=7.0.0"></script>
+
+
+
+  
+  
+
+
+  <script src="/js/src/affix.js?v=7.0.0"></script>
+
+  <script src="/js/src/schemes/pisces.js?v=7.0.0"></script>
+
+
+
+
+  
+  <script src="/js/src/scrollspy.js?v=7.0.0"></script>
+<script src="/js/src/post-details.js?v=7.0.0"></script>
+
+
+
+  
+
+
+  <script src="/js/src/bootstrap.js?v=7.0.0"></script>
+
+
+
+  
+  
+
+<script src="//cdn1.lncld.net/static/js/3.11.1/av-min.js"></script>
+
+
+
+<script src="//unpkg.com/valine/dist/Valine.min.js"></script>
+
+<script>
+  var GUEST = ['nick', 'mail', 'link'];
+  var guest = 'nick,mail';
+  guest = guest.split(',').filter(function(item) {
+    return GUEST.indexOf(item) > -1;
+  });
+  new Valine({
+    el: '#comments',
+    verify: true,
+    notify: true,
+    appId: 'C5p2It82joj83Mzm0milY5BK-gzGzoHsz',
+    appKey: 'iDq8etLnrVzoVdfbWoOOow4L',
+    placeholder: 'Tell me your story...',
+    avatar: 'mm',
+    meta: guest,
+    pageSize: '10' || 10,
+    visitor: false
+  });
+</script>
+
+
+
+
+  
+
+
+  
+  <script>
+    // Popup Window;
+    var isfetched = false;
+    var isXml = true;
+    // Search DB path;
+    var search_path = "search.xml";
+    if (search_path.length === 0) {
+      search_path = "search.xml";
+    } else if (/json$/i.test(search_path)) {
+      isXml = false;
+    }
+    var path = "/" + search_path;
+    // monitor main search box;
+
+    var onPopupClose = function (e) {
+      $('.popup').hide();
+      $('#local-search-input').val('');
+      $('.search-result-list').remove();
+      $('#no-result').remove();
+      $(".local-search-pop-overlay").remove();
+      $('body').css('overflow', '');
+    }
+
+    function proceedsearch() {
+      $("body")
+        .append('<div class="search-popup-overlay local-search-pop-overlay"></div>')
+        .css('overflow', 'hidden');
+      $('.search-popup-overlay').click(onPopupClose);
+      $('.popup').toggle();
+      var $localSearchInput = $('#local-search-input');
+      $localSearchInput.attr("autocapitalize", "none");
+      $localSearchInput.attr("autocorrect", "off");
+      $localSearchInput.focus();
+    }
+
+    // search function;
+    var searchFunc = function(path, search_id, content_id) {
+      'use strict';
+
+      // start loading animation
+      $("body")
+        .append('<div class="search-popup-overlay local-search-pop-overlay">' +
+          '<div id="search-loading-icon">' +
+          '<i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>' +
+          '</div>' +
+          '</div>')
+        .css('overflow', 'hidden');
+      $("#search-loading-icon").css('margin', '20% auto 0 auto').css('text-align', 'center');
+
+      
+        // ref: https://github.com/ForbesLindesay/unescape-html
+        var unescapeHtml = function(html) {
+          return String(html)
+            .replace(/&quot;/g, '"')
+            .replace(/&#39;/g, '\'')
+            .replace(/&#x3A;/g, ':')
+            // replace all the other &#x; chars
+            .replace(/&#(\d+);/g, function (m, p) { return String.fromCharCode(p); })
+            .replace(/&lt;/g, '<')
+            .replace(/&gt;/g, '>')
+            .replace(/&amp;/g, '&');
+        };
+      
+
+      $.ajax({
+        url: path,
+        dataType: isXml ? "xml" : "json",
+        async: true,
+        success: function(res) {
+          // get the contents from search data
+          isfetched = true;
+          $('.popup').detach().appendTo('.header-inner');
+          var datas = isXml ? $("entry", res).map(function() {
+            return {
+              title: $("title", this).text(),
+              content: $("content",this).text(),
+              url: $("url" , this).text()
+            };
+          }).get() : res;
+          var input = document.getElementById(search_id);
+          var resultContent = document.getElementById(content_id);
+          var inputEventFunction = function() {
+            var searchText = input.value.trim().toLowerCase();
+            var keywords = searchText.split(/[\s\-]+/);
+            if (keywords.length > 1) {
+              keywords.push(searchText);
+            }
+            var resultItems = [];
+            if (searchText.length > 0) {
+              // perform local searching
+              datas.forEach(function(data) {
+                var isMatch = false;
+                var hitCount = 0;
+                var searchTextCount = 0;
+                var title = data.title.trim();
+                var titleInLowerCase = title.toLowerCase();
+                var content = data.content.trim().replace(/<[^>]+>/g,"");
+                
+                content = unescapeHtml(content);
+                
+                var contentInLowerCase = content.toLowerCase();
+                var articleUrl = decodeURIComponent(data.url).replace(/\/{2,}/g, '/');
+                var indexOfTitle = [];
+                var indexOfContent = [];
+                // only match articles with not empty titles
+                if(title != '') {
+                  keywords.forEach(function(keyword) {
+                    function getIndexByWord(word, text, caseSensitive) {
+                      var wordLen = word.length;
+                      if (wordLen === 0) {
+                        return [];
+                      }
+                      var startPosition = 0, position = [], index = [];
+                      if (!caseSensitive) {
+                        text = text.toLowerCase();
+                        word = word.toLowerCase();
+                      }
+                      while ((position = text.indexOf(word, startPosition)) > -1) {
+                        index.push({position: position, word: word});
+                        startPosition = position + wordLen;
+                      }
+                      return index;
+                    }
+
+                    indexOfTitle = indexOfTitle.concat(getIndexByWord(keyword, titleInLowerCase, false));
+                    indexOfContent = indexOfContent.concat(getIndexByWord(keyword, contentInLowerCase, false));
+                  });
+                  if (indexOfTitle.length > 0 || indexOfContent.length > 0) {
+                    isMatch = true;
+                    hitCount = indexOfTitle.length + indexOfContent.length;
+                  }
+                }
+
+                // show search results
+
+                if (isMatch) {
+                  // sort index by position of keyword
+
+                  [indexOfTitle, indexOfContent].forEach(function (index) {
+                    index.sort(function (itemLeft, itemRight) {
+                      if (itemRight.position !== itemLeft.position) {
+                        return itemRight.position - itemLeft.position;
+                      } else {
+                        return itemLeft.word.length - itemRight.word.length;
+                      }
+                    });
+                  });
+
+                  // merge hits into slices
+
+                  function mergeIntoSlice(text, start, end, index) {
+                    var item = index[index.length - 1];
+                    var position = item.position;
+                    var word = item.word;
+                    var hits = [];
+                    var searchTextCountInSlice = 0;
+                    while (position + word.length <= end && index.length != 0) {
+                      if (word === searchText) {
+                        searchTextCountInSlice++;
+                      }
+                      hits.push({position: position, length: word.length});
+                      var wordEnd = position + word.length;
+
+                      // move to next position of hit
+
+                      index.pop();
+                      while (index.length != 0) {
+                        item = index[index.length - 1];
+                        position = item.position;
+                        word = item.word;
+                        if (wordEnd > position) {
+                          index.pop();
+                        } else {
+                          break;
+                        }
+                      }
+                    }
+                    searchTextCount += searchTextCountInSlice;
+                    return {
+                      hits: hits,
+                      start: start,
+                      end: end,
+                      searchTextCount: searchTextCountInSlice
+                    };
+                  }
+
+                  var slicesOfTitle = [];
+                  if (indexOfTitle.length != 0) {
+                    slicesOfTitle.push(mergeIntoSlice(title, 0, title.length, indexOfTitle));
+                  }
+
+                  var slicesOfContent = [];
+                  while (indexOfContent.length != 0) {
+                    var item = indexOfContent[indexOfContent.length - 1];
+                    var position = item.position;
+                    var word = item.word;
+                    // cut out 100 characters
+                    var start = position - 20;
+                    var end = position + 80;
+                    if(start < 0){
+                      start = 0;
+                    }
+                    if (end < position + word.length) {
+                      end = position + word.length;
+                    }
+                    if(end > content.length){
+                      end = content.length;
+                    }
+                    slicesOfContent.push(mergeIntoSlice(content, start, end, indexOfContent));
+                  }
+
+                  // sort slices in content by search text's count and hits' count
+
+                  slicesOfContent.sort(function (sliceLeft, sliceRight) {
+                    if (sliceLeft.searchTextCount !== sliceRight.searchTextCount) {
+                      return sliceRight.searchTextCount - sliceLeft.searchTextCount;
+                    } else if (sliceLeft.hits.length !== sliceRight.hits.length) {
+                      return sliceRight.hits.length - sliceLeft.hits.length;
+                    } else {
+                      return sliceLeft.start - sliceRight.start;
+                    }
+                  });
+
+                  // select top N slices in content
+
+                  var upperBound = parseInt('1');
+                  if (upperBound >= 0) {
+                    slicesOfContent = slicesOfContent.slice(0, upperBound);
+                  }
+
+                  // highlight title and content
+
+                  function highlightKeyword(text, slice) {
+                    var result = '';
+                    var prevEnd = slice.start;
+                    slice.hits.forEach(function (hit) {
+                      result += text.substring(prevEnd, hit.position);
+                      var end = hit.position + hit.length;
+                      result += '<b class="search-keyword">' + text.substring(hit.position, end) + '</b>';
+                      prevEnd = end;
+                    });
+                    result += text.substring(prevEnd, slice.end);
+                    return result;
+                  }
+
+                  var resultItem = '';
+
+                  if (slicesOfTitle.length != 0) {
+                    resultItem += "<li><a href='" + articleUrl + "' class='search-result-title'>" + highlightKeyword(title, slicesOfTitle[0]) + "</a>";
+                  } else {
+                    resultItem += "<li><a href='" + articleUrl + "' class='search-result-title'>" + title + "</a>";
+                  }
+
+                  slicesOfContent.forEach(function (slice) {
+                    resultItem += "<a href='" + articleUrl + "'>" +
+                      "<p class=\"search-result\">" + highlightKeyword(content, slice) +
+                      "...</p>" + "</a>";
+                  });
+
+                  resultItem += "</li>";
+                  resultItems.push({
+                    item: resultItem,
+                    searchTextCount: searchTextCount,
+                    hitCount: hitCount,
+                    id: resultItems.length
+                  });
+                }
+              })
+            };
+            if (keywords.length === 1 && keywords[0] === "") {
+              resultContent.innerHTML = '<div id="no-result"><i class="fa fa-search fa-5x"></i></div>'
+            } else if (resultItems.length === 0) {
+              resultContent.innerHTML = '<div id="no-result"><i class="fa fa-frown-o fa-5x"></i></div>'
+            } else {
+              resultItems.sort(function (resultLeft, resultRight) {
+                if (resultLeft.searchTextCount !== resultRight.searchTextCount) {
+                  return resultRight.searchTextCount - resultLeft.searchTextCount;
+                } else if (resultLeft.hitCount !== resultRight.hitCount) {
+                  return resultRight.hitCount - resultLeft.hitCount;
+                } else {
+                  return resultRight.id - resultLeft.id;
+                }
+              });
+              var searchResultList = '<ul class=\"search-result-list\">';
+              resultItems.forEach(function (result) {
+                searchResultList += result.item;
+              })
+              searchResultList += "</ul>";
+              resultContent.innerHTML = searchResultList;
+            }
+          }
+
+          if ('auto' === 'auto') {
+            input.addEventListener('input', inputEventFunction);
+          } else {
+            $('.search-icon').click(inputEventFunction);
+            input.addEventListener('keypress', function (event) {
+              if (event.keyCode === 13) {
+                inputEventFunction();
+              }
+            });
+          }
+
+          // remove loading animation
+          $(".local-search-pop-overlay").remove();
+          $('body').css('overflow', '');
+
+          proceedsearch();
+        }
+      });
+    }
+
+    // handle and trigger popup window;
+    $('.popup-trigger').click(function(e) {
+      e.stopPropagation();
+      if (isfetched === false) {
+        searchFunc(path, 'local-search-input', 'local-search-result');
+      } else {
+        proceedsearch();
+      };
+    });
+
+    $('.popup-btn-close').click(onPopupClose);
+    $('.popup').click(function(e){
+      e.stopPropagation();
+    });
+    $(document).on('keyup', function (event) {
+      var shouldDismissSearchPopup = event.which === 27 &&
+        $('.search-popup').is(':visible');
+      if (shouldDismissSearchPopup) {
+        onPopupClose();
+      }
+    });
+  </script>
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+
+  
+  <script>
+    (function(){
+      var bp = document.createElement('script');
+      var curProtocol = window.location.protocol.split(':')[0];
+      if (curProtocol === 'https') {
+        bp.src = 'https://zz.bdstatic.com/linksubmit/push.js'; 
+      }
+      else {
+        bp.src = 'http://push.zhanzhang.baidu.com/push.js';
+      }
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(bp, s);
+    })();
+  </script>
+
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>
